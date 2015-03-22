@@ -37,18 +37,19 @@ struct Internal {
 // Flags are used to mark nodes that will be changed, instead of 
 // needing to use locks.
 enum Info {
-    Flag {
-        flag:   Vec<Arc<Internal>>, // nodes to be flagged [0,4]
-        oldI:   Vec<Arc<Info>>,     // expected CAS value for flagging
-        unflag: Vec<Arc<Internal>>, // nodes to unflag [0,2]
-        par:    Vec<Arc<Internal>>, // nodes whose child changed [0,2]
-        old:    Vec<Arc<Node>>,     // expected children
-        new:    Vec<Arc<Node>>,     // new children
-        mvLeaf: Option<Arc<Leaf>>,  // leaf that may be flagged [0,1]
-        flagDone: bool,
-    },
-
+    Flag(Flag),
     Unflag,
+}
+
+struct Flag {
+    flag:   [Option<Arc<Internal>>; 4],// nodes to be flagged
+    oldI:   [Option<Arc<Info>>; 4],     // expected CAS value for flagging
+    unflag: [Option<Arc<Internal>>; 2], // nodes to unflag
+    par:    [Option<Arc<Internal>>; 2], // nodes whose child changed
+    old:    [Option<Arc<Node>>; 2],     // expected children
+    new:    [Option<Arc<Node>>; 2],     // new children
+    mvLeaf: Option<Arc<Leaf>>,          // leaf that may be flagged
+    flagDone: bool,
 }
 
 impl CPT {
