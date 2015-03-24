@@ -55,17 +55,23 @@ The abstract goes here.
 
 
 \section{Introduction}
-A Patricia Trie, also known as a Radix tree, is a unique version of a regular tree. The defining feature of any trie, also known
-as a digital tree, is that the position of a node in a tree defines the key for that node. A Patricia trie takes this and optimizes the tree by 
-merging any parent node with only one child in order to save space and create a more efficient tree.\cite{Shafiei2013} \par
-
+A Patricia Trie, also known as a Radix tree, is a unique version of a regular tree. The defining feature of any trie, also knownas a digital tree, is that the position of a node in a tree defines the key for that node. A Patricia trie takes this and optimizes the tree by merging any parent node with only one child in order to save space and create a more efficient tree.\cite{Shafiei2013} Because a Patricia Trie is a relatively simple data structure and has many practical uses, it is a good data structure to have an efficient parallelization technique for. 
+\par
+Our implementation of a parallelized, lock-free Patricia Tree will aim to maximize performance and space-efficiency while removing some of the overhead of previous implementations by fine-tuning the memory managment. We will combining multiple older approaches and taking the benefits of each and combining them. Our implementation will be focused on using compare-and-swap (CAS) operations which will allow for a blocking-free implementation. \cite{Shafiei2013,Brown2014}
+\par
+The main changes in our implementation from previous ones is that we will be storing the flags in multiple locations to allow for a smaller portion of the tree to be blocked off for some operations, creating less conflicts overall and increasing performance. \cite{Natarajan2014} The other main improvement we will be making is decreasing the overhead of creating and removing flags by compacting their size as much as possible, and more efficiently handling garbage collection . 
+\par
+Another large difference in our implementation is that we will be using a newer language called Rust and making use of it's unique advantages to help create our more efficient implementation. One benefit Rust offers is that it has an efficient memory-safety property without using garbage collection. However, the largest benefit for our implementation is their unique approach to concurrency using their ownership model that ensures more than one thread can not attempt to write to the same location at the same time. 
 
 
 \section{Related Works}
-Lock free concurrent trees and data structures in general have been progressing in the last couple of years. \cite{Brown2014,Brown2013}
-Since there are numerous data structures, the work on concurrent data structures has been spread out among them. However, Shafiei wrote
-a paper about Non-blocking Patricia tries \cite{Shafiei2013} that is related to our work. However, in their case they simply used a binary version of the tree 
-
+Creating high-performance, non-blocking data structures has advanced in recent years. There is work into making generalized data structures using CAS operations. \cite{Brown2013} This work has further been expanded into making generalized techniques for non-blocking trees. \cite{Brown2014} These techniques revolve around using load-link extended (LLX), store-conditional extended (SCX) and validate-extended (VLX) primitives which are generalized techniques of the standard, non-extended versions of the primitives. \cite{Brown2013, Brown2014} The techniques used are very powerful and efficient and help form a basis for some techniques used in our work. 
+\par
+Earlier, non-generalized implementation of this technique was seen in a few different data structures. The one related to our work is Shafiei's implementation of non-blocking Patricia Tries. \cite{Shafiei2013} This implementation used a binary tree implementation and handled the paralleziation by creating flag objects for operations that keep track of what has to be changed. These flags are very powerful because they let multiple threads work on one operation so one thread is not forced to wait.  Additionally, since the flag is there there is no chance of a portion of the tree becoming unusable if one thread fails in the middle of an operation. \cite{Shafiei2013, Howley2012} This technique is similar to ours, except we will be eliminating some of the overhead in their implementation due to the large amount of flags they created and the large size of each. Additionally we will be aiming to improve to memory management as compared to it. 
+\par
+Another similar work is an implementation of a lock-free binary search tree by Natarajan and Mittal. Their work also heavily involves CAS operations but the largest difference is that instead of marking the nodes they mark the edges between the nodes.\cite{Natarajan2014} This has interesting applications in that it allows a smaller portion of the tree to be flagged during insert and delete operations and allows for less conflicts on the whole.
+\par
+Shun and Blelloch showed another alternative approach to parallelization of trees with a multiway Cartesian tree. Theres is slightly unique in that they first create an array and then convert it into a tree. However, despite being different from out project, the algorithims they show in order to generate the tree from the array using parallization techniques warranted study. We looked into their techniques of differentiating what part a particular node is protected in, but ultimately decided the techniques were too far from our own to be much use. \cite{Shun2014}
 
 \section{Rust Language}
 Describe it here in detail, especially the parts of the std lib that we are using extensively.
