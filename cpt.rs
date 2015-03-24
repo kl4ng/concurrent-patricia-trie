@@ -80,9 +80,12 @@ impl CPT {
     // This is leveraged for most of the other algorithms, will return
     // <gp, p, node, gpi, pi, keyInTrie>
     fn search(&self, v: String) {
+        // what we have left of the string to search for
+        let mut s = v.clone();
+
         // p is Internal we may need to flag, pI are their children
         let mut p: Option<Arc<Internal>> = None;
-        let mut pI:Option<Arc<Node>> = None; 
+        let mut pI:Option<Arc<Node>> = None;
 
         // likewise with grandparents
         let mut gp: Option<Arc<Internal>> = None;
@@ -93,19 +96,32 @@ impl CPT {
         loop {
             match *node {
                 Node::Internal(ref i) => {
-                    
                 },
+                // we have found a leaf node
                 _ => break,
             }
         }
-        
-    }
+    }    
 
+    // A node may be physically in the tree without being logically in the tree
+    // (i.e., it has been flagged to be removed). This function checks for this.
     fn logicallyRemoved(I: Info) -> bool {
         match I {
+            // no flag = no pending removal
             Info::Unflag  => false,
-            Info::Flag(f) => true, //TODO
+
+            // check if this node is the old-child of its parent
+            Info::Flag(f) => match (&f.old[0], &f.par[0]) {  
+                // If par.child still contains node, then logical removal still pending
+                (&Some(ref node), &Some(ref par)) => !CPT::contains(node, &par.child),
+                _ => false,
+            },
         }
+    }
+
+    // Helper function for logicallyRemoved to check if par_children contains node.
+    fn contains(node: &Arc<Node>, par_children: &[Option<Arc<Node>>; 2]) -> bool {
+        true
     }
 }
 
