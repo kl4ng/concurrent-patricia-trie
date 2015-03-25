@@ -74,7 +74,11 @@ Another similar work is an implementation of a lock-free binary search tree by N
 Shun and Blelloch showed another alternative approach to parallelization of trees with a multiway Cartesian tree. Theres is slightly unique in that they first create an array and then convert it into a tree. However, despite being different from out project, the algorithims they show in order to generate the tree from the array using parallization techniques warranted study. We looked into their techniques of differentiating what part a particular node is protected in, but ultimately decided the techniques were too far from our own to be much use. \cite{Shun2014}
 
 \section{Rust Language}
-Describe it here in detail, especially the parts of the std lib that we are using extensively.
+Rust is a new programming language developed by Mozilla. Developed in parallel with their new Servo web rendering engine, it is developed from the ground up to support safety, concurrency, and parallelism, and was thus a very attractive candidate for our implementation of the concurrent patricia trie.\cite{MozillaResearch} Specifically, in terms of safety it guarantees no data races, buffer or stack overflow, and null pointer exceptions for most use cases. Due to its heavily static nature, it can validate the compiled program to be free of such errors and thus allows us to leverage this in creating a concurrent patricia trie that has fully managed memory instead of relying on garbage collection. Similarly, it is a language that focuses on speed, which will also help us achieve our desired result of having a patricia trie implementation that out-performs its counterparts. 
+\par
+However, Rust's approach to memory management, namely it being handled almost entirely by the language without a separate runtime for a garbage collector, has its limits. While this is true for most use cases, it becomes increasingly difficult for the compiler to guarantee this when the complexities of parallel lock-free algorithms come into play. The very nature of these algorithms relies more heavily on complex linearizability logic than the compiler can deduce, which means that more complex paralizability problems must have their own memory management, as is in our case.
+\par
+The main functionality from Rust's standard library that we will be utilizing in the implementation of the CPT algorithm are the Arc and AtomicPtr types. Arc<T> enables us to share any sort of information between threads safely, but does not directly have functionality to make that shared data mutable. The AtomicPtr<T> class gives usIn response to this, we must wrap Arc<T> around AtomicPtr<T> to get Arc<AtomicPtr<T>>. 
 
 
 \section{Algorithm Description}
@@ -82,7 +86,7 @@ Go into detail about what changes (if any) we make from the original pseudocode 
 
 
 \section{Conclusion}
-The conclusion goes here.
+The conclusion goes here, once we finish the above sections.
 
 
 \section{Acknowledgment}
@@ -92,11 +96,19 @@ Acknowledge orignial paper author here once he (hopefully) provides source code 
 % appendix section for midterm report
 \appendix
 \subsection{Challenges}
+As mentioned in the Rust Language section, a large part of the challenges thus far was trying to understand this somewhat esoteric language. Both of us come from a heavy background of Java, where the strict OOP styling in addition to garbage collection made reasoning about memory allocation and management on the stack or heap easy to reason about. However, Rust has a unique memory model where there is not only the distinction between stack and heap, but also between what can and cannot be shared, and what can and cannot be modified.
+\par
+Indeed, until recently it was thought that the Arc<T> datatype in the Rust standard library would be sufficient for our needs, and was a motivator for choosing Rust as the language of implementation as well. However, as we became more familiar with this somewhat sparsely-documented language, it became apparent that a lot of the functionality that drew us towards the language actually became less functional as one moves into more complex parallel algorithms and data structures.
+\par
 Talk about rust-lang and its difficulties, mainly. Some overlap with Rust Language section expected.
 
 
 \subsection{Completed Tasks}
-Decent chunk of original algorithm done. Research complete. Source code links to other implementations we can compare against. 
+We have completed practically all research we need in order to not only implement our current vision for this project, which currently is to not only fully implement the structure described by the pseudo-code in the paper we got most of our inspiration from this project from\cite{Shafiei2013}, but also to extend it to >2 children and possibly make further improvements in respects to the flags that facilitate most of the operations on the data structure.
+\par
+We have also reached out to the author of the aforementioned paper in hopes of obtaining source code to test against in order to see performance gains from using a non-GC and high-performance language, though we have yet to get a response. However, we have found other suitable source codes for this sort of comparison, also written in Java, though seemingly not as up-to-date in terms of utilizing the recent lock-free developments of patricia tries or any tree in academia.\cite{PATSource}
+\par
+Research complete. Source code links to other implementations we can compare against. Decent chunk of original algorithm done. 
 
 
 \subsection{Remaining Tasks}
