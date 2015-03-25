@@ -50,7 +50,7 @@ Email: klang2012@gmail.com}}
 
 
 \begin{abstract}
-The abstract goes here.
+This paper shows an implementation of a non-blocking Patricia Trie that combines techniques found in numerous recent implementations. It heavily uses the Compare and Swap operation and uses flags to prevent blocking. Additionally, it implements the flags in multiple locations in order to both increase efficiency and reduce the amount of conflicts. It also uses Rust and more efficient memory managment and decreased overhead to improve upon its predecessors. 
 \end{abstract}
 
 
@@ -61,7 +61,9 @@ Our implementation of a parallelized, lock-free Patricia Tree will aim to maximi
 \par
 The main changes in our implementation from previous ones is that we will be storing the flags in multiple locations to allow for a smaller portion of the tree to be blocked off for some operations, creating less conflicts overall and increasing performance. \cite{Natarajan2014} The other main improvement we will be making is decreasing the overhead of creating and removing flags by compacting their size as much as possible, and more efficiently handling garbage collection . 
 \par
-Another large difference in our implementation is that we will be using a newer language called Rust and making use of it's unique advantages to help create our more efficient implementation. One benefit Rust offers is that it has an efficient memory-safety property without using garbage collection. However, the largest benefit for our implementation is their unique approach to concurrency using their ownership model that ensures more than one thread can not attempt to write to the same location at the same time. 
+Another large difference in our implementation is that we will be using a newer language called Rust and making use of it's unique advantages to help create our more efficient implementation. One benefit Rust offers is that it has an efficient memory-safety property without using garbage collection. However, the largest benefit for our implementation is their unique approach to concurrency using their ownership model that ensures more than one thread can not attempt to write to the same location at the same time. However, just because our specific implementation is in rust does not mean that other languages can not implement the techniques used here.
+\par
+For the actual Patricia tree algorithm we will be using an algorithm similar to the psuedo-code seen in \cite{Shafiei2013}. However, we will be inserting various improvements on this algorithm, with the main one being that flags will also appear in the edges between two nodes to decrease conflicts. \cite{Natarajan2014}
 
 
 \section{Related Works}
