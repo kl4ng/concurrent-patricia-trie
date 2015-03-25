@@ -119,7 +119,7 @@ We have coded up part of the actual algorithm, but recently got blocked by reali
 \subsection{Remaining Tasks}
 \begin{itemize}
 \item Complete basic code for concurrent patricia tree, based off of \cite{Shafiei2013} pseudocode. 
-\item Solve any potential issues with rust.
+\item Solve any potential issues with rust. Main issue currently is figuring out how to work with Hazard Pointers.
 \item Attempt to modify flag structure and how the memory managament of it is handled in order to decrease overhead. Instead of letting a garbage collector handle everything, attempt manually managing the memory using Rust and see how the performance compares. 
 \item Attempt to create additional flag locations in the edges between nodes in order to decrease conflicts and increase efficiency. Test whether flags in only the nodes, only in the edges, or in both depending on the operation is most efficient.
 \item Hopefully get the source codes we requested from other papers and further look into their implementations and compare it to ours, and see if there is anything we can do to further improve our implementation.
