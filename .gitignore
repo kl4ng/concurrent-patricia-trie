@@ -10,3 +10,5 @@ COP4520.dvi
 COP4520.tex~
 COP4520.synctex.gz
 *.bib~
+Cargo.lock
+target/

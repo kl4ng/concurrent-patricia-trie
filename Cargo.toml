@@ -1,0 +1,8 @@
+[package]
+
+name = "cpt"
+version = "0.0.1"
+authors = ["Kevin Lang <klang2012@gmail.com>"]
+
+[[bin]]
+name = "cpt"
