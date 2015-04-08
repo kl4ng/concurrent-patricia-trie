@@ -1,4 +1,3 @@
-cpt
 COP4520.aux
 COP4520.bbl
 COP4520.blg
@@ -10,5 +9,4 @@ COP4520.dvi
 COP4520.tex~
 COP4520.synctex.gz
 *.bib~
-Cargo.lock
-target/
+/bin
