@@ -3,8 +3,10 @@ public class Node<T> {
 	int bit;
 	String key;
 	T val;
-	Info<T> info;
-	Node<T> left, right;
+	
+	// these are volatile since they are the fields we are CASing
+	volatile Info<T> info;
+	volatile Node<T> left, right;
 	
 	public Node() {
 		
