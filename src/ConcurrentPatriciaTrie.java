@@ -37,11 +37,7 @@ class SearchResult<T> {
 	}
 }
 
-/**
- * Able to store any T, but the key is just binary string for now
- * Which is stored simply as an integer (32 bits)
- * 
- */
+
 public class ConcurrentPatriciaTrie<T> {
 	
 	Node<T> root;
@@ -56,23 +52,38 @@ public class ConcurrentPatriciaTrie<T> {
 	
 	
 	public ConcurrentPatriciaTrie() {
-		root = new Node<T>(); // init with dummy key?
+		// initial root is empty string, mapped to null value
+		root = new Node<T>(-1, "", null, null, null, null);
 	}
 	
-	public boolean insert(String key) {
-		Flag<T> I;
+	public boolean insert(String key, T value) {
 		
+		// loop infinitely in case we fail insert (help fails)?
 		while(true) {
-			I = null;
-			SearchResult<T> res = search(key);
+			SearchResult<T> sr = search(key);
 			
-			if(!res.keyInTrie) {
-				return false;
+			if(sr.keyInTrie) {
+				return false;	// insert 'failed', because we cant replace val
 			}
 			
-			Info<T> nodeI 	= res.node.info;
-			Node<T> copy 	= res.node.clone();
-			Node<T> newNode = createNode(copy, new Node<T>(), nodeI);
+			Info<T> nodeI 	= sr.node.info;
+			Node<T> copy 	= new Node<T>(sr.node); // clone
+			Node<T> newNode = createNode(copy, new Node<T>(0,null,null), nodeI);
+			
+			Flag<T> flag = null;
+			if(newNode != null) {
+				// if node is internal
+				if(sr.node.left != null) {
+					flag = null;
+				}
+				else {
+					flag = null;
+				}
+				
+				if(flag != null && help(flag)) {
+					return true;
+				}
+			}
 		}
 	}
 	
@@ -81,8 +92,9 @@ public class ConcurrentPatriciaTrie<T> {
 			Info<T> I = null;
 			SearchResult<T> sr = search(key);
 			
-			if(!sr.keyInTrie)
+			if(!sr.keyInTrie) {
 				return false;
+			}
 			
 			// calculate the node we found's sibling
 			// since it is the sibling, if it is set, we want to go opposite direction
@@ -103,8 +115,9 @@ public class ConcurrentPatriciaTrie<T> {
 		SearchResult<T> sr = search(key);
 		
 		if(sr.keyInTrie)
-			return null;
-		return sr.node.val;
+			return sr.node.val;
+		
+		return null;
 	}
 	
 	// change search type to String later, we can decompose any string
@@ -154,7 +167,7 @@ public class ConcurrentPatriciaTrie<T> {
 			doChildCAS = infoUpdater.compareAndSet(flag.oldChild, flag.oldInfo2, flag);
 		}
 		
-		// if we succesfully flagged all applicable nodes
+		// if we successfully flagged all applicable nodes
 		if(doChildCAS) {
 			flag.flagDone = true;
 			
@@ -167,7 +180,7 @@ public class ConcurrentPatriciaTrie<T> {
 			}
 		}
 		
-		// unflag regardless of success, and return if we succeeded or no.
+		// unflag info regardless of success, and return if we succeeded or no.
 		infoUpdater.compareAndSet(flag.par, flag, new Unflag<T>());
 		return flag.flagDone;
 	}
@@ -184,9 +197,13 @@ public class ConcurrentPatriciaTrie<T> {
 		}
 		return null;
 		
-		// return new Internal whose childrens are node1/node2
+		// return new Internal whose children are node1/node2
 	}
 	
+	/* since in this implementation we know no internal nodes exist
+	 * with either node.left or node.right as null, we can also just check
+	 * either left or right, arbitrarily, instead of both.
+	 */
 	private static boolean isLeaf(Node node) {
 		return node.left == null && node.right == null;
 	}
@@ -199,7 +216,7 @@ public class ConcurrentPatriciaTrie<T> {
 
 		// see if this Node's parents has disowned it, logically
 		Flag f = (Flag) I;
-		return f.par.left == f.oldChild;
+		return f.par.left == f.oldChild || f.par.right == f.oldChild;
 		
 	}
 	

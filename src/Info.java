@@ -20,7 +20,7 @@ class Flag<T> extends Info<T> {
 			Node<T> oldChild, Node<T> newChild) {
 		this.oldInfo1 = oldInfo1;
 		this.oldInfo2 = oldInfo2;
-		this.par = par;
+		this.par 	  = par;
 		this.oldChild = oldChild;
 		this.newChild = newChild;
 		
