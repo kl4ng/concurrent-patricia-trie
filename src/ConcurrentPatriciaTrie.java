@@ -6,6 +6,10 @@
  *
  * Concurrent Patricia Trie WITHOUT Replace
  * but with Edge-locking?
+ * 
+ * TODO: utilize edge-based locking
+ * TODO: utilize internal nodes if possible for better compression
+ * TODO: create junit tests (both seq and parallel)
  */
 
 
@@ -40,7 +44,7 @@ class SearchResult<T> {
 
 public class ConcurrentPatriciaTrie<T> {
 	
-	Node<T> root;
+	private Node<T> root;
 	
 	// CAS helper variables
 	private static final AtomicReferenceFieldUpdater<Node, Info> infoUpdater =
@@ -53,7 +57,7 @@ public class ConcurrentPatriciaTrie<T> {
 	
 	public ConcurrentPatriciaTrie() {
 		// initial root is empty string, mapped to null value
-		root = new Node<T>(-1, "", null, null, null, null);
+		root = new Node<T>("", null, -1, null, null, null);
 	}
 	
 	public boolean insert(String key, T value) {
@@ -68,7 +72,8 @@ public class ConcurrentPatriciaTrie<T> {
 			
 			Info<T> nodeI 	= sr.node.info;
 			Node<T> copy 	= new Node<T>(sr.node); // clone
-			Node<T> newNode = createNode(copy, new Node<T>(0,null,null), nodeI);
+			Node<T> newLeaf = new Node<T>(key, value);
+			Node<T> newNode = createNode(copy, newLeaf, nodeI);
 			
 			Flag<T> flag = null;
 			if(newNode != null) {
@@ -107,7 +112,7 @@ public class ConcurrentPatriciaTrie<T> {
 		}
 	}
 	
-	public boolean find(String key) {
+	public boolean contains(String key) {
 		return search(key).keyInTrie;
 	}
 	
@@ -211,7 +216,7 @@ public class ConcurrentPatriciaTrie<T> {
 	
 	private static boolean logicallyRemoved(Info I) {
 		// if its not flagged, of course its not logically removed!
-		if(I.getClass() == Unflag.class)
+		if(I == null || I.getClass() == Unflag.class)
 			return false;
 
 		// see if this Node's parents has disowned it, logically
@@ -243,11 +248,5 @@ public class ConcurrentPatriciaTrie<T> {
 	
 	private static boolean isPrefix(Node n, String key) {
 		return isSet(key, n.bit);
-	}
-
-	
-	// testing code until we move to junit
-	public static void main(String[] args) {
-		
 	}
 }
