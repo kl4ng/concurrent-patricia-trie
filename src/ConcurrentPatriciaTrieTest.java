@@ -8,7 +8,7 @@ public class ConcurrentPatriciaTrieTest {
     @Test
     public void whenInitialized() {
         ConcurrentPatriciaTrie<Integer> cpt =  new ConcurrentPatriciaTrie<Integer>();
-        assertFalse(cpt.contains("ayy"));
-        assertTrue(cpt.contains(""));
+        assertFalse(cpt.contains(12));
+        assertFalse(cpt.contains(0));
     }
 }
