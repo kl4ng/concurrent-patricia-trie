@@ -7,9 +7,9 @@
  * Concurrent Patricia Trie WITHOUT Replace
  * but with Edge-locking?
  * 
- * TODO: utilize edge-based locking
- * TODO: utilize internal nodes if possible for better compression
+ * TODO: complete this edge-based lock implementation
  * TODO: create junit tests (both seq and parallel)
+ * TODO: consider doing edge-based replace as well
  */
 
 
@@ -18,18 +18,16 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 
 public class ConcurrentPatriciaTrie<T> {
 	
-    final Node<T> root;
+    final Node<T> root, rootChild;
     
     /* we need one dummy key so root starts as internal
      */
     public ConcurrentPatriciaTrie()
     {
         long key = Long.MAX_VALUE;
-        
-        AtomicStampedReference<Node<T>> left = new AtomicStampedReference<Node<T>>(
-                new Node<T>(key, null, 0, null, null), 0);
-        
-        root = new Node<T>(key, null, 0, left, null);
+
+        this.rootChild = new Node<T>(key, null, 0, null, null);        
+        this.root      = new Node<T>(key, null, 0, rootChild, null);
     }
     
     /*
@@ -71,17 +69,17 @@ public class ConcurrentPatriciaTrie<T> {
     /*
      * Returns false if key is not in the tree
      */
-    public boolean insert(long key)
+    public boolean insert(long key, T value)
     {
         Node<T> node;
         Node<T> pnode;
         int bit;
-        boolean insertLeft;
+        boolean insertRight;
         
         while(true)
         {
             pnode   = root;
-            node    = root.left.getReference();
+            node    = rootChild;
             bit     = -1;
             
             while(!isLeaf(node) && node.bit > bit)
@@ -99,8 +97,85 @@ public class ConcurrentPatriciaTrie<T> {
                 }
             }
             
-            Node oldChild = node;
+            // check if we have already have this
+            if(node.key == key)
+            {   
+                return false;
+            }
+            
+            insertRight = isSet(key, node.bit);
+            
+            // we have the closest thing to the key, find closest bit
+            // that doesnt match, that will be this new nodes bit val
+            bit = 0;
+            while(isSet(key, bit) == isSet(node.key, bit))
+            {
+                bit++;
+            }
+            
+            // create actual nodes that will be inserted
+            Node<T> internal;
+            Node<T> tmpLeaf = new Node<T>(key, value, bit);
+            if(true)// we chose to go right
+            {
+                internal = new Node<T>(key, value, bit, null, tmpLeaf);
+            }
+            else    // we chose to go left
+            {
+                
+            }
+            
+            // insert new internal/leaf pair
+            if(insertRight)
+            {
+                if(pnode.right.compareAndSet(node, internal, 0, 0))
+                {
+                    return true;
+                }
+                else
+                {
+                    // we have failed to insert
+                    // if address has not changed, issue is because node is marked
+                    if(node == pnode.right.getReference())
+                    { 
+                        // lets help who we are conflicting with
+                        cleanUp(key, seek(key));
+                    }
+                }
+            }
+            else
+            {
+                if(pnode.left.compareAndSet(node, internal, 0, 0))
+                {
+                    return true;
+                }
+                else
+                {
+                    // we have failed to insert
+                    // if address has not changed, issue is because node is marked
+                    if(node == pnode.right.getReference())
+                    { 
+                        // lets help who we are conflicting with
+                        cleanUp(key, seek(key));
+                    }
+                }
+            }
+            
+            // go back to beginning and try to insert again!
         }
+    }
+    
+    public SeekRecord<T> seek(long key)
+    {
+        AtomicStampedReference<Node<T>> parField;
+        AtomicStampedReference<Node<T>> curField;
+        Node<T> cur;
+        
+        // init
+        SeekRecord<T> s = new SeekRecord<T>(root, rootChild, rootChild, rootChild.left.getReference());
+        
+        parField = s.ancestor.left;
+        curField = s.successor.left;
     }
 	
 	/* since in this implementation we know no internal nodes exist
