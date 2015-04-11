@@ -160,7 +160,7 @@ public class ConcurrentPatriciaTrie<T> {
             // insert new internal/leaf pair
             if(pnode.key > key)
             {
-                if(pnode.left.compareAndSet(node, internal, 0, 0))
+                if(pnode.left.compareAndSet(node, internal, Node.UF_UT, Node.UF_UT))
                 {
                     return true;
                 }
@@ -177,7 +177,7 @@ public class ConcurrentPatriciaTrie<T> {
             }
             else
             {
-                if(pnode.right.compareAndSet(node, internal, 0, 0))
+                if(pnode.right.compareAndSet(node, internal, Node.UF_UT, Node.UF_UT))
                 {
                     return true;
                 }
@@ -197,6 +197,91 @@ public class ConcurrentPatriciaTrie<T> {
         }
     }
     
+    public final void delete(int key)
+    {
+        boolean isCleanup = false;
+        SeekRecord<T> s;
+        Node<T> par;
+        Node<T> leaf = null;
+        while(true)
+        {
+            s = seek(key);
+            if(!isCleanup)
+            {
+                leaf = s.leaf;
+                if(leaf.key != key)
+                {
+                    return; //closest thing we found isnt what we want to delete
+                }
+                else    // we found it, lets delete it
+                {
+                    par = s.parent;
+                    if(par.key > key)
+                    {
+                        // flag the left, we want to remove it so it shouldnt already be flagged/tagged
+                        if(par.left.compareAndSet(leaf, leaf, Node.UF_UT, Node.F_UT))
+                        {
+                            // attempt to cleanup now
+                            isCleanup = true;
+                            if(cleanUp(key, s))
+                            {
+                                return;
+                            }
+                        }
+                        else    // we failed to flag
+                        {
+                            if(leaf == par.left.getReference())
+                            {
+                                // address hasnt changed, so either this node
+                                // or its sibling was tagged for deletion
+                                cleanUp(key, s);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // flag the left, we want to remove it so it shouldnt already be flagged/tagged
+                        if(par.right.compareAndSet(leaf, leaf, Node.UF_UT, Node.F_UT))
+                        {
+                            // attempt to cleanup now
+                            isCleanup = true;
+                            if(cleanUp(key, s))
+                            {
+                                return;
+                            }
+                        }
+                        else    // we failed to flag
+                        {
+                            if(leaf == par.right.getReference())
+                            {
+                                // address hasnt changed, so either this node
+                                // or its sibling was tagged for deletion
+                                cleanUp(key, s);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // we already have flagged what we want to delete, finish it
+                if(s.leaf == leaf)
+                {
+                    if(cleanUp(key, s))
+                    {
+                        // we finished our job
+                        return;
+                    }
+                }
+                else
+                {
+                    // we can no longer see it, its gone! - someone helped us
+                    return;
+                }
+            }
+        }
+    }
+    
     // TODO: modify so that it handles prefix-matching
     public SeekRecord<T> seek(int key)
     {
@@ -210,7 +295,7 @@ public class ConcurrentPatriciaTrie<T> {
         parField = s.ancestor.left;
         curField = s.successor.left;
         
-        while(curField != null)
+        while(curField != null && curField.getReference() != null)
         {
             cur = curField.getReference();
             

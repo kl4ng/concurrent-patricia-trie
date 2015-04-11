@@ -18,7 +18,7 @@ public class ConcurrentPatriciaTrieTest
     }
     
     @Test
-    public void whenInsertingPositive()
+    public void whenInserting()
     {
         ConcurrentPatriciaTrie<Integer> cpt =  new ConcurrentPatriciaTrie<Integer>(); 
         
@@ -37,7 +37,35 @@ public class ConcurrentPatriciaTrieTest
         {
             assertTrue(cpt.contains(s.pop()));
         }        
-        assertFalse(cpt.contains(1005));
+    }
+    
+    @Test
+    public void whenDeleting()
+    {
+        ConcurrentPatriciaTrie<Integer> cpt =  new ConcurrentPatriciaTrie<Integer>(); 
+        cpt.insert(5, 5);
+        assertTrue(cpt.contains(5));
+        cpt.delete(5);
+        assertFalse(cpt.contains(5));
+        
+        Random r = new Random();
+        Stack<Integer> s = new Stack<Integer>();
+        
+        for(int i = 0; i < 500; i++)
+        {
+            int tmp = r.nextInt(1000)+1;
+            cpt.insert(tmp, tmp);
+            assertTrue(cpt.contains(tmp));
+            s.push(tmp);
+        }
+        
+        while(!s.isEmpty())
+        {
+            int tmp = s.pop();
+            assertTrue(cpt.contains(tmp));
+            cpt.delete(tmp);
+            assertFalse(cpt.contains(tmp));
+        }     
     }
     
     @Test
