@@ -18,35 +18,49 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 
 public class ConcurrentPatriciaTrie<T> {
 	
-    final Node<T> root, rootChild;
+    final Node<T> grandRoot, root;
     
-    /* we need one dummy key so root starts as internal
+    /*
+     * Initial state of tree looks like this:
+     * 
+     *      [gr]
+     *   [r]    [d]
+     * [0] [1]
+     * 
+     * gr right dummy node should never be touched, and can probably just be null
+     * r is the logical root of the tree, but we need two roots for seeking
+     * 0 is all-0-bits key, 1 is all-1-bits key
+     * all four of these nodes are null-valued, and thus 'dont exist'
      */
     public ConcurrentPatriciaTrie()
     {
-        long key = Long.MAX_VALUE;
+        // dummy key for all of the init 5 nodes
+        int key = Integer.MAX_VALUE;
 
-        this.rootChild = new Node<T>(key, null);        
-        this.root      = new Node<T>(key, null, 0, rootChild, null);
+        this.root = new Node<T>(key, null, 0, new Node<T>(0, null), new Node<T>(-1, null));        
+        this.grandRoot = new Node<T>(key, null, 0, root, new Node<T>(key, null));
     }
     
     /*
      * returns true if the key maps to a non-null value
+     * thus this wont do false-positive on our initial nodes
      */
-    public boolean contains(long key)
+    public boolean contains(int key)
     {
         return get(key) != null;
     }
     
-    public T get(long key)
+    /*
+     * searches for node, and returns its value if it is a leaf
+     * because all internals are used in traversal, not storage
+     */
+    public T get(int key)
     {
         Node<T> node = root;
-        int bit = -1;
         
-        while(!isLeaf(node) && node.bit > bit)
+        while(!isLeaf(node) && isPrefix(node, key))
         {
-            bit = node.bit;
-            if(isSet(key, node.bit))
+            if(key > node.key)
             {
                 node = node.right.getReference();
             }
@@ -56,7 +70,7 @@ public class ConcurrentPatriciaTrie<T> {
             }
         }
         
-        if(key == node.key)
+        if(isLeaf(node) && key == node.key)
         {
             return node.value;
         }
@@ -67,28 +81,24 @@ public class ConcurrentPatriciaTrie<T> {
     }
     
     /*
-     * Returns false if key is not in the tree
+     * Returns false if key is already in tree
      */
-    public boolean insert(long key, T value)
+    public boolean insert(int key, T value)
     {
         Node<T> node;
         Node<T> pnode;
-        int bit;
-        boolean insertRight;
         
         while(true)
         {
             pnode   = root;
-            node    = rootChild;
-            bit     = -1;
+            node    = root.left.getReference();
             
             // find where we want to insert
-            while(!isLeaf(node) && node.bit > bit)
+            while(!isLeaf(node) && isPrefix(node, key))
             {
-                bit     = node.bit;
                 pnode   = node;
                 
-                if(isSet(key, node.bit))
+                if(key > node.key)
                 {
                     node = node.right.getReference();
                 }
@@ -103,38 +113,38 @@ public class ConcurrentPatriciaTrie<T> {
             {   
                 return false;
             }
+            // TODO: special case where we can replace null value of dummy keys?
             
-            // we have the closest thing to the key, find closest bit
-            // that doesnt match, that will be this new internal bit val
-            bit = 0;
-            while(isSet(key, bit) == isSet(node.key, bit))
+            // we have the closest thing to the key, find closest bit that doesn't match
+            int bit = 0;
+            while(isSet(key, bit) == isSet(node.key, bit)) // could be more efficient
             {
                 bit++;
             }
             
-            /* Insert new internal with children of 'node' and 'newNode'
-             * The left child being the one where the different bit is set to 0
-             * and the right child being the one where the differing bit is set to 1
-             */
+            // calculate internal key (capture only those bits before the differing bit)
+            int inKey = key & (-1 << Integer.SIZE - bit);
+            
+            // Insert new internal with children of 'node' and 'newNode'
             Node<T> internal;
             Node<T> newNode = new Node<T>(key, value);
-            if(isSet(key, bit))
+            if(newNode.key > node.key)
             {
-                internal = new Node<T>(key, value, bit, node, newNode);
+                internal = new Node<T>(inKey, bit-1, node, newNode);
             }
             else
             {
-                internal = new Node<T>(key, value, bit, newNode, node);
+                internal = new Node<T>(inKey, bit-1, newNode, node);
             }
             
             // insert new internal/leaf pair
-            if(isSet(key, pnode.bit))    // go right
+            if(node.key > pnode.key)
             {
                 if(pnode.right.compareAndSet(node, internal, 0, 0))
                 {
                     return true;
                 }
-                else    // go left
+                else
                 {
                     // we have failed to insert
                     // if address has not changed, issue is because node is marked
@@ -167,14 +177,15 @@ public class ConcurrentPatriciaTrie<T> {
         }
     }
     
-    public SeekRecord<T> seek(long key)
+    // TODO: modify so that it handles prefix-matching
+    public SeekRecord<T> seek(int key)
     {
         AtomicStampedReference<Node<T>> parField;
         AtomicStampedReference<Node<T>> curField;
         Node<T> cur;
         
         // init
-        SeekRecord<T> s = new SeekRecord<T>(root, rootChild, rootChild, rootChild.left.getReference());
+        SeekRecord<T> s = new SeekRecord<T>(grandRoot, root, root, root.left.getReference());
         
         parField = s.ancestor.left;
         curField = s.successor.left;
@@ -197,8 +208,7 @@ public class ConcurrentPatriciaTrie<T> {
             parField = curField;
             
             // decide which way we will go down further
-            // go right if the bit of key is set, left otherwise
-            if(isSet(key, cur.bit))
+            if(key > cur.key)
             {
                 curField = cur.right;
             }
@@ -211,25 +221,35 @@ public class ConcurrentPatriciaTrie<T> {
         return s;
     }
 	
-    public boolean cleanUp(long key, SeekRecord s)
+    public boolean cleanUp(int key, SeekRecord s)
     {
         return true;
     }
     
-	/* since in this implementation we know no internal nodes exist
+    /*
+     * The mask represents all meaningful bits contained in the internal
+     * node's key. if any of those bits differ, it is no longer a prefix
+     */
+    private static boolean isPrefix(Node node, int key)
+    {
+        return isSet(node.key, node.bit) == isSet(key, node.bit);
+    }
+    
+    /*
+	 * since in this implementation we know no internal nodes exist
 	 * with either node.left or node.right as null, we can also just check
 	 * either left or right, arbitrarily, instead of both.
 	 */
 	private static boolean isLeaf(Node node)
 	{
-		return node.left == null;
+		return node.left.getReference() == null;
 	}
 
 	
-	private static long MSB = 1 << Long.SIZE-1;
+	private static int MSB = 1 << Integer.SIZE-1;
 	
 	private static boolean isSet(long key, int bit)
-	{
+	{   
 		// We deal with the bitIndex in a BigEndian manner
 		long mask = (MSB >>> bit);
 		return (key & mask) != 0;
