@@ -6,6 +6,16 @@ public class Node<T>
     long key;
     T value;
     int bit;
+    
+    /* address,b1,b2 is the bit structure of these
+     * b1 refers to flag, which means the 'head' and 'tail' both will be removed
+     * b2 refers to tag, which means only 'tail' will be removed
+     */
+    static int UF_UT = 0;   // 00
+    static int UF_T  = 1;   // 01
+    static int F_UT  = 2;   // 10
+    static int F_T   = 3;   // 11
+    
     volatile AtomicStampedReference<Node<T>> left;
     volatile AtomicStampedReference<Node<T>> right;
     
@@ -18,9 +28,10 @@ public class Node<T>
         this.right  = new AtomicStampedReference<Node<T>>(right,0);
     }
     
-    
-    public Node(long key, T value, int bit)
+    // constructor for leaf. bit value will never be used, since bit comparisons
+    // only done on internal nodes
+    public Node(long key, T value)
     {
-        this(key, value, bit, null, null);
+        this(key, value, 0, null, null);
     }
 }

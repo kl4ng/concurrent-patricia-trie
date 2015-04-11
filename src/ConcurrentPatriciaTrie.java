@@ -26,7 +26,7 @@ public class ConcurrentPatriciaTrie<T> {
     {
         long key = Long.MAX_VALUE;
 
-        this.rootChild = new Node<T>(key, null, 0, null, null);        
+        this.rootChild = new Node<T>(key, null);        
         this.root      = new Node<T>(key, null, 0, rootChild, null);
     }
     
@@ -82,6 +82,7 @@ public class ConcurrentPatriciaTrie<T> {
             node    = rootChild;
             bit     = -1;
             
+            // find where we want to insert
             while(!isLeaf(node) && node.bit > bit)
             {
                 bit     = node.bit;
@@ -97,42 +98,43 @@ public class ConcurrentPatriciaTrie<T> {
                 }
             }
             
-            // check if we have already have this
+            // check if we have already have this key inserted
             if(node.key == key)
             {   
                 return false;
             }
             
-            insertRight = isSet(key, node.bit);
-            
             // we have the closest thing to the key, find closest bit
-            // that doesnt match, that will be this new nodes bit val
+            // that doesnt match, that will be this new internal bit val
             bit = 0;
             while(isSet(key, bit) == isSet(node.key, bit))
             {
                 bit++;
             }
             
-            // create actual nodes that will be inserted
+            /* Insert new internal with children of 'node' and 'newNode'
+             * The left child being the one where the different bit is set to 0
+             * and the right child being the one where the differing bit is set to 1
+             */
             Node<T> internal;
-            Node<T> tmpLeaf = new Node<T>(key, value, bit);
-            if(true)// we chose to go right
+            Node<T> newNode = new Node<T>(key, value);
+            if(isSet(key, bit))
             {
-                internal = new Node<T>(key, value, bit, null, tmpLeaf);
+                internal = new Node<T>(key, value, bit, node, newNode);
             }
-            else    // we chose to go left
+            else
             {
-                
+                internal = new Node<T>(key, value, bit, newNode, node);
             }
             
             // insert new internal/leaf pair
-            if(insertRight)
+            if(isSet(key, pnode.bit))    // go right
             {
                 if(pnode.right.compareAndSet(node, internal, 0, 0))
                 {
                     return true;
                 }
-                else
+                else    // go left
                 {
                     // we have failed to insert
                     // if address has not changed, issue is because node is marked
@@ -153,7 +155,7 @@ public class ConcurrentPatriciaTrie<T> {
                 {
                     // we have failed to insert
                     // if address has not changed, issue is because node is marked
-                    if(node == pnode.right.getReference())
+                    if(node == pnode.left.getReference())
                     { 
                         // lets help who we are conflicting with
                         cleanUp(key, seek(key));
@@ -176,8 +178,44 @@ public class ConcurrentPatriciaTrie<T> {
         
         parField = s.ancestor.left;
         curField = s.successor.left;
+        
+        while(curField != null)
+        {
+            cur = curField.getReference();
+            
+            // check if the par->leaf edge is tagged
+            if(parField.getStamp() == Node.UF_UT || parField.getStamp() == Node.F_UT) 
+            {
+                // save that this as the last untagged edge we've seen
+                s.ancestor = s.parent;
+                s.successor= s.leaf;
+            }
+            
+            // advance parent and leaf as we go down
+            s.parent = s.leaf;
+            s.leaf = cur;
+            parField = curField;
+            
+            // decide which way we will go down further
+            // go right if the bit of key is set, left otherwise
+            if(isSet(key, cur.bit))
+            {
+                curField = cur.right;
+            }
+            else
+            {
+                curField = cur.left;
+            }    
+        }
+        // we have found
+        return s;
     }
 	
+    public boolean cleanUp(long key, SeekRecord s)
+    {
+        return true;
+    }
+    
 	/* since in this implementation we know no internal nodes exist
 	 * with either node.left or node.right as null, we can also just check
 	 * either left or right, arbitrarily, instead of both.
