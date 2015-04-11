@@ -60,7 +60,7 @@ public class ConcurrentPatriciaTrie<T> {
         
         while(!isLeaf(node) && isPrefix(node, key))
         {
-            if(key > node.key)
+            if(key >= node.key)
             {
                 node = node.right.getReference();
             }
@@ -98,7 +98,7 @@ public class ConcurrentPatriciaTrie<T> {
             {
                 pnode   = node;
                 
-                if(key > node.key)
+                if(key >= node.key)
                 {
                     node = node.right.getReference();
                 }
@@ -122,13 +122,13 @@ public class ConcurrentPatriciaTrie<T> {
                 bit++;
             }
             
-            // calculate internal key (capture only those bits before the differing bit)
-            int inKey = key & (-1 << Integer.SIZE - bit);
+            // calculate internal key (capture only those bits before and containing the differing bit)
+            int inKey = key & (-1 << Integer.SIZE - bit-1);
             
             // Insert new internal with children of 'node' and 'newNode'
             Node<T> internal;
             Node<T> newNode = new Node<T>(key, value);
-            if(newNode.key > node.key)
+            if(newNode.key >= node.key)
             {
                 internal = new Node<T>(inKey, bit-1, node, newNode);
             }
@@ -138,7 +138,7 @@ public class ConcurrentPatriciaTrie<T> {
             }
             
             // insert new internal/leaf pair
-            if(node.key > pnode.key)
+            if(node.key >= pnode.key)
             {
                 if(pnode.right.compareAndSet(node, internal, 0, 0))
                 {
@@ -208,7 +208,7 @@ public class ConcurrentPatriciaTrie<T> {
             parField = curField;
             
             // decide which way we will go down further
-            if(key > cur.key)
+            if(key >= cur.key)
             {
                 curField = cur.right;
             }

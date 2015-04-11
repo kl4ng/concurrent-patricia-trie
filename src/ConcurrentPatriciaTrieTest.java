@@ -15,10 +15,22 @@ public class ConcurrentPatriciaTrieTest
     }
     
     @Test
-    public void whenInserting()
+    public void whenInsertingPositive()
     {
         ConcurrentPatriciaTrie<Integer> cpt =  new ConcurrentPatriciaTrie<Integer>();
-        cpt.insert(1,1);
-        assertTrue(cpt.contains(1));
+        for(int i = 1; i < 100; i++)
+            cpt.insert(i,i);
+        for(int i = 1; i < 100; i++)
+            assertTrue(cpt.contains(i));
+    }
+    
+    @Test
+    public void whenInsertingNegative()
+    {
+        ConcurrentPatriciaTrie<Integer> cpt =  new ConcurrentPatriciaTrie<Integer>();
+        for(int i = -100; i < -5; i++)
+            cpt.insert(i,i);
+        for(int i = -100; i < -5; i++)
+            assertTrue(cpt.contains(i));
     }
 }
