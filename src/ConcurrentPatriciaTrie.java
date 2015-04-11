@@ -18,27 +18,28 @@ import java.util.concurrent.atomic.AtomicStampedReference;
 
 public class ConcurrentPatriciaTrie<T> {
 	
-    final Node<T> grandRoot, root;
+    private final Node<T> grandRoot, root;
+    
+    private final int all1 = ((1 << (31) >> (31) ) >>> 1);
+    private final int all0 = 0;
+    private final int rootKey = Integer.MAX_VALUE;
     
     /*
      * Initial state of tree looks like this:
      * 
      *      [gr]
      *   [r]    [d]
-     * [0] [1]
+     * [d] [d]
      * 
-     * gr right dummy node should never be touched, and can probably just be null
+     * gr is the grand-root, needed for seeking, and has a dummy-right node
      * r is the logical root of the tree, but we need two roots for seeking
-     * 0 is all-0-bits key, 1 is all-1-bits key
+     * d are dummy nodes, and have the same key as gr and r, which is MAX_INT
      * all four of these nodes are null-valued, and thus 'dont exist'
      */
     public ConcurrentPatriciaTrie()
     {
-        // dummy key for all of the init 5 nodes
-        int key = Integer.MAX_VALUE;
-
-        this.root = new Node<T>(key, null, 0, new Node<T>(0, null), new Node<T>(-1, null));        
-        this.grandRoot = new Node<T>(key, null, 0, root, new Node<T>(key, null));
+        this.root = new Node<T>(rootKey, null, 0, new Node<T>(all0, null), new Node<T>(all1, null));        
+        this.grandRoot = new Node<T>(rootKey, null, 0, root, new Node<T>(all1, null));
     }
     
     /*
@@ -48,6 +49,22 @@ public class ConcurrentPatriciaTrie<T> {
     public boolean contains(int key)
     {
         return get(key) != null;
+    }
+    
+    public boolean debugContains(int key)
+    {
+        return rContains(root, key);
+    }
+    
+    private boolean rContains(Node<T> r, int key)
+    {
+        if(r == null)
+            return false;
+        
+        if(r.key == key)
+            return true;
+        
+        return rContains(r.left.getReference(), key) || rContains(r.right.getReference(), key);
     }
     
     /*
@@ -60,13 +77,13 @@ public class ConcurrentPatriciaTrie<T> {
         
         while(!isLeaf(node) && isPrefix(node, key))
         {
-            if(key >= node.key)
+            if(node.key > key)
             {
-                node = node.right.getReference();
+                node = node.left.getReference();
             }
             else
             {
-                node = node.left.getReference();
+                node = node.right.getReference();
             }
         }
         
@@ -98,64 +115,50 @@ public class ConcurrentPatriciaTrie<T> {
             {
                 pnode   = node;
                 
-                if(key >= node.key)
+                if(node.key > key)
                 {
-                    node = node.right.getReference();
+                    node = node.left.getReference();
                 }
                 else
                 {
-                    node = node.left.getReference();
+                    node = node.right.getReference();
                 }
             }
             
             // check if we have already have this key inserted
-            if(node.key == key)
+            if(isLeaf(node) && node.key == key)
             {   
                 return false;
             }
             // TODO: special case where we can replace null value of dummy keys?
             
-            // we have the closest thing to the key, find closest bit that doesn't match
-            int bit = 0;
-            while(isSet(key, bit) == isSet(node.key, bit)) // could be more efficient
+            // we have the closest thing to the key, find first differing bit
+            int tmp = node.key ^ key;
+            int i = 0;
+            while(tmp != 0)
             {
-                bit++;
+                tmp >>>= 1;
+                i++;
             }
             
-            // calculate internal key (capture only those bits before and containing the differing bit)
-            int inKey = key & (-1 << Integer.SIZE - bit-1);
+            int inKey = key >>> i << i;
+            inKey = inKey | (1 << (i-1));
+            int inMask = all1 >>> i << i;
             
             // Insert new internal with children of 'node' and 'newNode'
             Node<T> internal;
             Node<T> newNode = new Node<T>(key, value);
-            if(newNode.key >= node.key)
+            if(node.key > key)
             {
-                internal = new Node<T>(inKey, bit-1, node, newNode);
+                internal = new Node<T>(inKey, inMask, newNode, node);
             }
             else
             {
-                internal = new Node<T>(inKey, bit-1, newNode, node);
+                internal = new Node<T>(inKey, inMask, node, newNode);
             }
             
             // insert new internal/leaf pair
-            if(node.key >= pnode.key)
-            {
-                if(pnode.right.compareAndSet(node, internal, 0, 0))
-                {
-                    return true;
-                }
-                else
-                {
-                    // we have failed to insert
-                    // if address has not changed, issue is because node is marked
-                    if(node == pnode.right.getReference())
-                    { 
-                        // lets help who we are conflicting with
-                        cleanUp(key, seek(key));
-                    }
-                }
-            }
-            else
+            if(pnode.key > key)
             {
                 if(pnode.left.compareAndSet(node, internal, 0, 0))
                 {
@@ -166,6 +169,23 @@ public class ConcurrentPatriciaTrie<T> {
                     // we have failed to insert
                     // if address has not changed, issue is because node is marked
                     if(node == pnode.left.getReference())
+                    { 
+                        // lets help who we are conflicting with
+                        cleanUp(key, seek(key));
+                    }
+                }
+            }
+            else
+            {
+                if(pnode.right.compareAndSet(node, internal, 0, 0))
+                {
+                    return true;
+                }
+                else
+                {
+                    // we have failed to insert
+                    // if address has not changed, issue is because node is marked
+                    if(node == pnode.right.getReference())
                     { 
                         // lets help who we are conflicting with
                         cleanUp(key, seek(key));
@@ -208,13 +228,13 @@ public class ConcurrentPatriciaTrie<T> {
             parField = curField;
             
             // decide which way we will go down further
-            if(key >= cur.key)
+            if(cur.key > key)
             {
-                curField = cur.right;
+                curField = cur.left;
             }
             else
             {
-                curField = cur.left;
+                curField = cur.right;
             }    
         }
         // we have found
@@ -232,7 +252,7 @@ public class ConcurrentPatriciaTrie<T> {
      */
     private static boolean isPrefix(Node node, int key)
     {
-        return isSet(node.key, node.bit) == isSet(key, node.bit);
+        return ((node.key ^ key) & node.mask) == 0;
     }
     
     /*

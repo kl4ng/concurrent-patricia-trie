@@ -15,24 +15,24 @@ public class Node<T>
     
     int key;
     T value;
-    int bit;
+    int mask;
     volatile AtomicStampedReference<Node<T>> left;
     volatile AtomicStampedReference<Node<T>> right;
     
     // full constructor
-    public Node(int key, T value, int bit, Node<T> left, Node<T> right)
+    public Node(int key, T value, int mask, Node<T> left, Node<T> right)
     {
         this.key    = key;
         this.value  = value;
-        this.bit    = bit;
+        this.mask   = mask;
         this.left   = new AtomicStampedReference<Node<T>>(left,0);
         this.right  = new AtomicStampedReference<Node<T>>(right,0);
     }
     
     // constructor for internals (no value stored)
-    public Node(int key, int bit, Node<T> left, Node<T> right) 
+    public Node(int key, int mask, Node<T> left, Node<T> right) 
     {
-        this(key, null, bit, left, right);
+        this(key, null, mask, left, right);
     }
 
     // constructor for leaf. bit value will never be used, since bit comparisons
