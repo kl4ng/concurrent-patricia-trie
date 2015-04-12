@@ -1,5 +1,5 @@
 # concurrent-patricia-trie
-A concurrent non-blocking patricia trie implemented in Java. This trie supports long keys and uses edge-based locking for memory and performance improvements.
+A concurrent non-blocking patricia trie implemented in Java. This trie supports integer keys and uses edge-based locking for memory and performance improvements.
 This was done as a final project for Dr. Dechev's Parallel Algorithms and Programming (COP4520) class at UCF. This repository also includes a final paper written in LaTeX that goes over the details of the project.
 
 ## Compiling
