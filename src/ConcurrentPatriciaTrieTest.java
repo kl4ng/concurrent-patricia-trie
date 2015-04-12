@@ -43,10 +43,6 @@ public class ConcurrentPatriciaTrieTest
     public void whenDeleting()
     {
         ConcurrentPatriciaTrie<Integer> cpt =  new ConcurrentPatriciaTrie<Integer>(); 
-        cpt.insert(5, 5);
-        assertTrue(cpt.contains(5));
-        cpt.delete(5);
-        assertFalse(cpt.contains(5));
         
         Random r = new Random();
         Stack<Integer> s = new Stack<Integer>();
@@ -54,6 +50,9 @@ public class ConcurrentPatriciaTrieTest
         for(int i = 0; i < 500; i++)
         {
             int tmp = r.nextInt(1000)+1;
+            if(s.contains(tmp))
+                continue;
+                
             cpt.insert(tmp, tmp);
             assertTrue(cpt.contains(tmp));
             s.push(tmp);
@@ -65,7 +64,7 @@ public class ConcurrentPatriciaTrieTest
             assertTrue(cpt.contains(tmp));
             cpt.delete(tmp);
             assertFalse(cpt.contains(tmp));
-        }     
+        }   
     }
     
     @Test

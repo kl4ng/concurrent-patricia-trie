@@ -20,7 +20,7 @@ public class ConcurrentPatriciaTrie<T> {
 	
     private final Node<T> grandRoot, root;
     
-    private final int all1 = ((1 << (31) >> (31) ) >>> 1);
+    private final int all1 = Integer.MAX_VALUE;
     private final int all0 = 0;
     private final int rootKey = Integer.MAX_VALUE;
     
@@ -28,12 +28,12 @@ public class ConcurrentPatriciaTrie<T> {
      * Initial state of tree looks like this:
      * 
      *      [gr]
-     *   [r]    [d]
-     * [d] [d]
+     *   [r]    [1]
+     * [0] [1]
      * 
      * gr is the grand-root, needed for seeking, and has a dummy-right node
      * r is the logical root of the tree, but we need two roots for seeking
-     * d are dummy nodes, and have the same key as gr and r, which is MAX_INT
+     * 0 and 1 are dummy nodes, 0 being all0s and 1 being all1s (AKA max_INT)
      * all four of these nodes are null-valued, and thus 'dont exist'
      */
     public ConcurrentPatriciaTrie()
@@ -282,6 +282,110 @@ public class ConcurrentPatriciaTrie<T> {
         }
     }
     
+    /*
+     * Receives stamp and sets the tag bit.
+     */
+    private int setTag(int stamp)
+    {
+        switch(stamp)
+        {
+        case Node.UF_UT:
+            stamp = Node.UF_T;
+            break;
+        case Node.F_UT:
+            stamp = Node.F_T;
+            break;
+        }
+        
+        return stamp;
+    }
+    
+    private int getFlag(int stamp)
+    {
+        return (stamp == Node.F_T || stamp == Node.F_UT) ? 1 : 0;
+    }
+    
+    public boolean cleanUp(int key, SeekRecord<T> s)
+    {
+        Node<T> anc = s.ancestor;
+        Node<T> par = s.parent;
+        Node<T> oldSuc, sib;
+        int oldStamp;
+        int sibStamp;
+        
+        if(par.key > key)   // node is to the left
+        {
+            if(par.left.getStamp() == Node.F_UT || par.left.getStamp() == Node.F_T)
+            {
+                // leaf is flagged. tag sibling so no modifications happen to parent
+                sib = par.right.getReference();
+                sibStamp = setTag(par.right.getStamp());
+                par.right.attemptStamp(sib, sibStamp);
+                
+                // the new successor will be this tagged sibling
+                sib = par.right.getReference();
+                sibStamp = par.right.getStamp();
+                
+            }
+            else
+            {
+                // node is not flagged, so the sibling must have been flagged
+                // lets help them out with deletion
+                sib = par.left.getReference();
+                sibStamp = setTag(par.left.getStamp());
+                par.left.attemptStamp(sib, sibStamp);
+                
+                // the new successor will be this tagged node
+                sib = par.left.getReference();
+                sibStamp = par.left.getStamp();
+            }
+        }
+        else    // node is to the right
+        {
+            if(par.right.getStamp() == Node.F_UT || par.right.getStamp() == Node.F_T)
+            {
+                // leaf is flagged. tag sibling so no modifications happen to parent
+                sib = par.left.getReference();
+                sibStamp = setTag(par.left.getStamp());
+                par.left.attemptStamp(sib, sibStamp);
+                
+                // the new successor will be this tagged sibling
+                sib = par.left.getReference();
+                sibStamp = par.left.getStamp();
+                
+            }
+            else
+            {
+                // node is not flagged, so the sibling must have been flagged
+                // lets help them out with deletion
+                sib = par.right.getReference();
+                sibStamp = setTag(par.right.getStamp());
+                par.right.attemptStamp(sib, sibStamp);
+                
+                // the new successor will be this tagged node
+                sib = par.right.getReference();
+                sibStamp = par.right.getStamp();
+            }
+        }
+        
+        // everything from successor to 'sibling' is flagged for removal
+        // lets CAS all those away (i.e., remove them)
+        if(anc.key > key)
+        {
+            sibStamp = getFlag(sibStamp);
+            oldSuc = anc.left.getReference();
+            oldStamp = anc.left.getStamp();
+            return(anc.left.compareAndSet(oldSuc, sib, oldStamp, sibStamp));
+        }
+        else
+        {
+            sibStamp = getFlag(sibStamp);
+            oldSuc = anc.right.getReference();
+            oldStamp = anc.right.getStamp();
+            return(anc.right.compareAndSet(oldSuc, sib, oldStamp, sibStamp));
+        }
+    }
+    
     // TODO: modify so that it handles prefix-matching
     public SeekRecord<T> seek(int key)
     {
@@ -324,11 +428,6 @@ public class ConcurrentPatriciaTrie<T> {
         }
         // we have found
         return s;
-    }
-	
-    public boolean cleanUp(int key, SeekRecord s)
-    {
-        return true;
     }
     
     /*
