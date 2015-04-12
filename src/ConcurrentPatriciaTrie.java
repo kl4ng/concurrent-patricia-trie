@@ -2,13 +2,15 @@
  * Kevin Lang
  * Cole Garner
  * 
- * With help from Niloufar Shafiei's non-replace code
- *
- * Concurrent Patricia Trie WITHOUT Replace
- * but with Edge-locking?
+ * Concurrent Patricia Trie using edge-flagging
  * 
- * TODO: complete this edge-based lock implementation
- * TODO: create junit tests (both seq and parallel)
+ * With help from Niloufar Shafiei's patricia trie
+ * node-based-flagging non-replace code
+ * 
+ * And help from Aravind Natarajan / Neeraj Mittal's 
+ * lock-free-bst code with edge-based flagging/tagging
+ * 
+ * TODO: create junit tests (parallel)
  * TODO: consider doing edge-based replace as well
  */
 
@@ -56,6 +58,9 @@ public class ConcurrentPatriciaTrie<T> {
         return rContains(root, key);
     }
     
+    /*
+     * recursively searches ENTIRE tree, for debug purposes
+     */
     private boolean rContains(Node<T> r, int key)
     {
         if(r == null)
@@ -130,7 +135,6 @@ public class ConcurrentPatriciaTrie<T> {
             {   
                 return false;
             }
-            // TODO: special case where we can replace null value of dummy keys?
             
             // we have the closest thing to the key, find first differing bit
             int tmp = node.key ^ key;
@@ -386,7 +390,6 @@ public class ConcurrentPatriciaTrie<T> {
         }
     }
     
-    // TODO: modify so that it handles prefix-matching
     public SeekRecord<T> seek(int key)
     {
         AtomicStampedReference<Node<T>> parField;
@@ -402,6 +405,12 @@ public class ConcurrentPatriciaTrie<T> {
         while(curField != null && curField.getReference() != null)
         {
             cur = curField.getReference();
+            
+            if(!isPrefix(cur, key))
+            {
+                // if where we are at isn't a prefix of key, then the key is not within the cpt
+                return s;
+            }
             
             // check if the par->leaf edge is tagged
             if(parField.getStamp() == Node.UF_UT || parField.getStamp() == Node.F_UT) 
