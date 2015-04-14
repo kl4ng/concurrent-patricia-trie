@@ -99,6 +99,9 @@ Go into detail about what changes (if any) we make from the original pseudocode 
 
 
 \section{Experimental Evaluation}
+In this section, we will describe the results of evaluating our edge-based-flagging patricia trie with other similar concurrent data structures.
+
+The other data structures we will be using will be a lock-free binary search tree based on\cite{Natarajan2014} which is also implemented in Java\cite{LFBST}. The second and final data structure we will be testing our results with is a lock-free patricia trie with node-based flagging as described in\cite{Shafiei2013}. For the implementation, we reached out to the author who provided us with his Java source code of his non-replace implementation.
 
 \begin{tikzpicture}
   \begin{groupplot}[group style={group size= 3 by 4, vertical sep=1.5cm, horizontal sep=1.8cm},height=5.5cm,width=5.5cm]
