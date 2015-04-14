@@ -1,0 +1,33 @@
+Stuff from latex not needed anymore, but saved just in case.
+
+
+% appendix section for midterm report
+\appendix
+\subsection{Challenges}
+The first challenges we faced was trying to find a suitable C++ stdlib data structure that we could improve in a novel way, but we couldn't find anything where we felt we could make a big enough improvement to be worthwhile to do a semester-long project on. Later on, when we were moving towards doing a more esoteric data structure in any sort of managed-memory language, we found out that one of our group mates decided to drop the class which lead to some further delays as we had to reassess what sort of topics were within our scope when we had less manpower.
+\par
+As mentioned in the Rust Language section, a large part of the challenges thus far was trying to understand this somewhat esoteric language. Both of us come from a heavy background of Java, where the strict OOP styling in addition to garbage collection made reasoning about memory allocation and management on the stack or heap easy to reason about. However, Rust has a unique memory model where there is not only the distinction between stack and heap, but also between what can and cannot be shared, and what can and cannot be modified. This, combined with our initial lack of familiarity with the memory-related needs of lock-free data structures, like the need for some sort of hazard pointer type for memory management, lead to much of our time just trying to figure out the best way to approach this problem from both the perspective of the language's best practices and the recommendations by the current state of parallel-related academia.
+\par
+Indeed, until recently it was thought that the Arc data type in the Rust standard library, perhaps combined with the AtomicPtr data type, would be sufficient for our needs, and was a motivator for choosing Rust as the language of implementation as well. However, as we became more familiar with this somewhat sparsely-documented language, it became apparent that a lot of the functionality that drew us towards the language actually became less functional as one moves into more complex parallel algorithms and data structures. Nevertheless, the language has atomic primitives built into it and a thriving community which made finding info on Rust best practices as easy as going to the relevant IRC channel.
+\par
+
+
+\subsection{Completed Tasks}
+We have completed practically all research we need in order to not only implement our current vision for this project, which currently is to not only fully implement the structure described by the pseudo-code in the paper we got most of our inspiration from this project from\cite{Shafiei2013}, but also to extend it to >2 children and possibly make further improvements in respects to the flags that facilitate most of the operations on the data structure.
+\par
+We have also reached out to the author of the aforementioned paper in hopes of obtaining source code to test against in order to see performance gains from using a non-GC and high-performance language, though we have yet to get a response. However, we have found other suitable source codes for this sort of comparison, also written in Java, though seemingly not as up-to-date in terms of utilizing the recent lock-free developments of Patricia tries or any tree in academia.\cite{PATSource}
+\par
+We have coded up part of the actual algorithm, but recently got blocked by realizing that we needed to roll our own HazardPointer class in order to be able to safely manage memory in this lock-free data structure. However, since we now seem to have a clear and complete vision of the nature of our chosen topic, we plan on being able to complete coding up the binary-version of the concurrent Patricia trie within the coming weeks.
+\par
+
+
+\subsection{Remaining Tasks}
+\begin{itemize}
+\item Complete basic code for concurrent Patricia tree, based off of \cite{Shafiei2013} pseudocode.
+\item Solve any potential issues with rust. Main issue currently is figuring out how to work with Hazard Pointers.
+\item Attempt to modify flag structure and how the memory management of it is handled in order to decrease overhead. Instead of letting a garbage collector handle everything, attempt manually managing the memory using Rust and see how the performance compares.
+\item Attempt to create additional flag locations in the edges between nodes in order to decrease conflicts and increase efficiency. Test whether flags in only the nodes, only in the edges, or in both depending on the operation is most efficient.
+\item Hopefully get the source codes we requested from other papers and further look into their implementations and compare it to ours, and see if there is anything we can do to further improve our implementation.
+\item Look into the best ways to compare the performance of our data structures versus other implementations and then actually run the comparisons and document the results.
+\item Finish the paper once we have finished everything else.
+\end{itemize}
