@@ -1,6 +1,12 @@
 \documentclass[conference]{IEEEtran}
 
 \usepackage{cite}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+\usetikzlibrary{matrix}
+\pgfplotsset{compat=newest}
 
 
 %\usepackage[cmex10]{amsmath}
@@ -93,10 +99,130 @@ Our algorithm is devised from two state of the art techniques for concurrent tre
 \par
 The main advantage to come the edge-based technique is that it allows for insert and delete operations to flag a smaller portion of the tree and use fewer atomic instructions. \cite{Natarajan2014} By doing this, the implementation will create fewer conflicts and will allow for more concurrent insert and delete operations, allowing for great speedups for trees with heavy emphasis on insert and delete. However, the method also causes seek operations to perform slightly worst sometimes by increasing the time it takes for them to reach their target node when there is a marked branch in their path. Because of this, we will combinen this approach with the more tradidional node-based approach for certain operations so that we can further improve the edge-based approach by only using it when necessary. 
 
+Go into detail about what changes (if any) we make from the original pseudocode due to the nature of the Rust language (for better or for worse). Go into detail about what we do new (hopefully able to implement it with more than two children, or have less Flag objects).
+
 \subsection{Data Structures}
 The data structure used to store the Patricia Tree is simply a tree that stores a grand root node and a logical root node as well as all the functions to search and modify inside the tree. The two root structure is used for creating searching by forcing enough nodes to make a proper seek record.
 \par
 The individual node structure is also relatively simple. It contains a key to store for comparison purposes, which is technically uneeded due to the nature of a trie, but very helpful. It contains a value and a mask, and perhaps the most important part is that instead of classic pointers to the children, it makes use of an AtomicStampedReference that allows for CAS operations on the edge between the two nodes and allows for both a node pointer and an integer to be stored. By allowing the integer to be stored inside the edge, it enables the edge to be flagged on the edge and is a large part of how our algorithm works.
+
+\section{Experimental Evaluation}
+In this section, we will describe the results of evaluating our edge-based-flagging patricia trie with other similar concurrent data structures.
+
+The other data structures we will be using will be a lock-free binary search tree based on\cite{Natarajan2014} which is also implemented in Java\cite{LFBST}. The second and final data structure we will be testing our results with is a lock-free patricia trie with node-based flagging as described in\cite{Shafiei2013}. For the implementation, we reached out to the author who provided us with his Java source code of his non-replace implementation.
+
+\begin{tikzpicture}
+  \begin{groupplot}[group style={group size= 3 by 4, vertical sep=1.5cm, horizontal sep=1.8cm},height=5.5cm,width=5.5cm]
+      
+      %%
+      % 0/50/50 1K
+      \nextgroupplot[title=Write Dominated,xlabel={(a)},ylabel={1K Key Range}]
+              \addplot coordinates {
+                  (1, 3816793.893130) (2, 3463803.255975) (4, 6205398.696866) (8, 6498781.478473) (16, 6470921.297420)
+              };\label{plots:cpt-ef}
+              \addplot coordinates {
+                  (0, 10) (2, 5)
+              };\label{plots:cpt-nf}
+              \addplot coordinates {
+                  (0, 10) (2, 5)
+              };\label{plots:bst-ef}
+              \coordinate (top) at (rel axis cs:0,1);% coordinate at top of the first plot
+      
+      % 70/20/10 1K
+      \nextgroupplot[title=Mixed,xlabel={(b)}]
+              \addplot coordinates {
+                  (1, 4892367.906067) (2, 6146281.499693) (4, 11876484.560570) (8, 14378145.219267) (16, 15683199.372672) 
+              };\label{plots:cpt-ef}
+      
+      % 90/9/1 1K
+      \nextgroupplot[title=Read Dominated,xlabel={(c)}]
+              \addplot coordinates {
+                  (1, 5102040.816327) (2, 8431703.204047) (4, 11607661.056297) (8, 23310023.310023) (16, 24024024.024024) 
+              };\label{plots:cpt-ef}
+      
+      %%
+      % 0/50/50 10K
+      \nextgroupplot[ylabel={10K Key Range},xlabel={(d)}]
+              \addplot coordinates {
+                  (1, 2341920.374707) (2, 2604166.666667) (4, 4599816.007360) (8, 5210368.633581) (16, 5307503.483049)
+              };\label{plots:cpt-ef}
+      
+      % 70/20/10 10K
+      \nextgroupplot[xlabel={(e)}]
+              \addplot coordinates {
+                  (1, 2842524.161455) (2, 4006410.256410) (4, 7870916.961826) (8, 9136592.051165) (16, 9939122.872407) 
+              };\label{plots:cpt-ef}
+      
+      % 90/9/1 10K
+      \nextgroupplot[xlabel={(f)}]
+              \addplot coordinates {
+                  (1, 2873563.218391) (2, 5089058.524173) (4, 9429514.380009) (8, 12618296.529968) (16, 10489052.051921) 
+              };\label{plots:cpt-ef}     
+      
+      %%
+      % 0/50/50 100K
+      \nextgroupplot[ylabel={100K Key Range},xlabel={(g)}]
+              \addplot coordinates {
+                                (1, 900252.070580) (2, 1347708.894879) (4, 1876700.760064) (8, 1910037.245726) (16, 2036037.870304)  
+              };\label{plots:cpt-ef}
+      
+      % 70/20/10 100K
+      \nextgroupplot[xlabel={(h)}]
+              \addplot coordinates {
+                  (1, 1087902.523934) (2, 1664447.403462) (4, 2367704.510477) (8, 2572678.157962) (16, 2429469.464606) 
+              };\label{plots:cpt-ef}
+      
+      % 90/9/1 100K
+      \nextgroupplot[xlabel={(i)}]
+              \addplot coordinates {
+                  (1, 1287001.287001) (2, 1855976.243504) (4, 2956393.200296) (8, 2690884.628322) (16, 3132096.155352) 
+              };\label{plots:cpt-ef}
+      
+      %%
+      % 0/50/50 1M
+      \nextgroupplot[ylabel={1M Key Range},xlabel={(j)}]
+              \addplot coordinates {
+                                (1, 504948.495253) (2, 1025325.540859) (4, 1008013.708986) (8, 1008954.470929) (16, 1158731.768080) 
+              };\label{plots:cpt-ef}
+
+      % 70/20/10 1M
+      \nextgroupplot[xlabel={(k)}]
+              \addplot coordinates {
+                  (1, 671140.939597) (2, 1084951.719648) (4, 1695489.996609) (8, 1790911.126035) (16, 1893132.661271) 
+              };\label{plots:cpt-ef}
+      
+      % 90/9/1 1M
+      \nextgroupplot[xlabel={(l)}]
+              \addplot coordinates {
+                  (1, 900414.190528) (2, 1273398.701133) (4, 2072753.653228) (8, 2050545.957861) (16, 2341577.637934) 
+              };\label{plots:cpt-ef}
+              \coordinate (bot) at (rel axis cs:0,0);% coordinate at bottom of the last plot
+  \end{groupplot}
+  \path (top-|current bounding box.west)-- 
+        node[anchor=south,rotate=90] {Throughput(opns/sec)} 
+        (bot-|current bounding box.west);
+          
+  % legend
+  \path (top|-current bounding box.north)--
+        coordinate(legendpos)
+        (bot|-current bounding box.north);
+  \matrix[
+      matrix of nodes,
+      anchor=south,
+      draw,
+      inner sep=0.2em,
+      draw
+    ]at([yshift=1ex]legendpos)
+    {
+      \ref{plots:cpt-ef}& CPT-EDGE-FLAG&[8pt]
+      \ref{plots:cpt-nf}& CPT-NODE-FLAG&[8pt]
+      \ref{plots:bst-ef}& BST-EDGE-FLAG\\};
+\end{tikzpicture}
+\clearpage
+
+
+\section{Conclusion}
+The conclusion goes here, once we finish the above sections.
 
 
 \subsection{Algorithm Basics}

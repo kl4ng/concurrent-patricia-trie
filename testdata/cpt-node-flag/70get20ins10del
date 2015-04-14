@@ -1,0 +1,107 @@
+get/ins/del: 70 / 20 / 10
+Key range: 1000
+Num threads: 1
+Throughput (op/sec): 5800464.037123
+
+get/ins/del: 70 / 20 / 10
+Key range: 1000
+Num threads: 2
+Throughput (op/sec): 5714285.714286
+
+get/ins/del: 70 / 20 / 10
+Key range: 1000
+Num threads: 4
+Throughput (op/sec): 12853470.437018
+
+get/ins/del: 70 / 20 / 10
+Key range: 1000
+Num threads: 8
+Throughput (op/sec): 13689253.935661
+
+get/ins/del: 70 / 20 / 10
+Key range: 1000
+Num threads: 16
+Throughput (op/sec): 16406890.894176
+
+
+
+get/ins/del: 70 / 20 / 10
+Key range: 10000
+Num threads: 1
+Throughput (op/sec): 3711952.487008
+
+get/ins/del: 70 / 20 / 10
+Key range: 10000
+Num threads: 2
+Throughput (op/sec): 5022601.707685
+
+get/ins/del: 70 / 20 / 10
+Key range: 10000
+Num threads: 4
+Throughput (op/sec): 8684324.793747
+
+get/ins/del: 70 / 20 / 10
+Key range: 10000
+Num threads: 8
+Throughput (op/sec): 10078105.316201
+
+get/ins/del: 70 / 20 / 10
+Key range: 10000
+Num threads: 16
+Throughput (op/sec): 11804633.318578
+
+
+
+get/ins/del: 70 / 20 / 10
+Key range: 100000
+Num threads: 1
+Throughput (op/sec): 1566906.925729
+
+get/ins/del: 70 / 20 / 10
+Key range: 100000
+Num threads: 2
+Throughput (op/sec): 2302555.836979
+
+get/ins/del: 70 / 20 / 10
+Key range: 100000
+Num threads: 4
+Throughput (op/sec): 2867383.512545
+
+get/ins/del: 70 / 20 / 10
+Key range: 100000
+Num threads: 8
+Throughput (op/sec): 2221605.109692
+
+get/ins/del: 70 / 20 / 10
+Key range: 100000
+Num threads: 16
+Throughput (op/sec): 3040091.202736
+
+
+
+get/ins/del: 70 / 20 / 10
+Key range: 1000000
+Num threads: 1
+Throughput (op/sec): 1131990.038488
+
+get/ins/del: 70 / 20 / 10
+Key range: 1000000
+Num threads: 2
+Throughput (op/sec): 1529987.760098
+
+get/ins/del: 70 / 20 / 10
+Key range: 1000000
+Num threads: 4
+Throughput (op/sec): 1776356.692424
+
+get/ins/del: 70 / 20 / 10
+Key range: 1000000
+Num threads: 8
+Throughput (op/sec): 1986491.855383
+
+get/ins/del: 70 / 20 / 10
+Key range: 1000000
+Num threads: 16
+Throughput (op/sec): 1619957.881095
+
+

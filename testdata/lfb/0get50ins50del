@@ -1,0 +1,107 @@
+get/ins/del: 0 / 50 / 50
+Key range: 1000
+Num threads: 1
+Throughput (op/sec): 3888024.883359
+
+get/ins/del: 0 / 50 / 50
+Key range: 1000
+Num threads: 2
+Throughput (op/sec): 3654970.760234
+
+get/ins/del: 0 / 50 / 50
+Key range: 1000
+Num threads: 4
+Throughput (op/sec): 6371455.877668
+
+get/ins/del: 0 / 50 / 50
+Key range: 1000
+Num threads: 8
+Throughput (op/sec): 6885866.758478
+
+get/ins/del: 0 / 50 / 50
+Key range: 1000
+Num threads: 16
+Throughput (op/sec): 7292616.226071
+
+
+
+get/ins/del: 0 / 50 / 50
+Key range: 10000
+Num threads: 1
+Throughput (op/sec): 2292526.364053
+
+get/ins/del: 0 / 50 / 50
+Key range: 10000
+Num threads: 2
+Throughput (op/sec): 2655337.227828
+
+get/ins/del: 0 / 50 / 50
+Key range: 10000
+Num threads: 4
+Throughput (op/sec): 4499437.570304
+
+get/ins/del: 0 / 50 / 50
+Key range: 10000
+Num threads: 8
+Throughput (op/sec): 4899559.039686
+
+get/ins/del: 0 / 50 / 50
+Key range: 10000
+Num threads: 16
+Throughput (op/sec): 5325168.075617
+
+
+
+get/ins/del: 0 / 50 / 50
+Key range: 100000
+Num threads: 1
+Throughput (op/sec): 809585.492228
+
+get/ins/del: 0 / 50 / 50
+Key range: 100000
+Num threads: 2
+Throughput (op/sec): 1273074.474857
+
+get/ins/del: 0 / 50 / 50
+Key range: 100000
+Num threads: 4
+Throughput (op/sec): 1878287.002254
+
+get/ins/del: 0 / 50 / 50
+Key range: 100000
+Num threads: 8
+Throughput (op/sec): 1813812.179749
+
+get/ins/del: 0 / 50 / 50
+Key range: 100000
+Num threads: 16
+Throughput (op/sec): 1830998.809851
+
+
+
+get/ins/del: 0 / 50 / 50
+Key range: 1000000
+Num threads: 1
+Throughput (op/sec): 548426.017330
+
+get/ins/del: 0 / 50 / 50
+Key range: 1000000
+Num threads: 2
+Throughput (op/sec): 874814.102003
+
+get/ins/del: 0 / 50 / 50
+Key range: 1000000
+Num threads: 4
+Throughput (op/sec): 1107910.480833
+
+get/ins/del: 0 / 50 / 50
+Key range: 1000000
+Num threads: 8
+Throughput (op/sec): 1153635.393534
+
+get/ins/del: 0 / 50 / 50
+Key range: 1000000
+Num threads: 16
+Throughput (op/sec): 1161524.500907
+
+

@@ -6,12 +6,13 @@ import java.util.Stack;
 import org.junit.Test;
 
 
-public class ConcurrentPatriciaTrieTest
+public class CPTSeqTest
 {
 
     @Test
     public void whenInitialized()
     {
+    
         ConcurrentPatriciaTrie<Integer> cpt =  new ConcurrentPatriciaTrie<Integer>();
         assertFalse(cpt.contains(12));
         assertFalse(cpt.contains(0));
