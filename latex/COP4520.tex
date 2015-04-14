@@ -4,39 +4,16 @@
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{pgfplots}
+\usepackage{listings}
 \usepgfplotslibrary{groupplots}
 \usetikzlibrary{matrix}
 \pgfplotsset{compat=newest}
-
-
-%\usepackage[cmex10]{amsmath}
-% A popular package from the American Mathematical Society that provides
-% many useful and powerful commands for dealing with mathematics. If using
-% it, be sure to load this package with the cmex10 option to ensure that
-% only type 1 fonts will utilized at all point sizes. Without this option,
-% it is possible that some math symbols, particularly those within
-% footnotes, will be rendered in bitmap form which will result in a
-% document that can not be IEEE Xplore compliant!
-%
-% Also, note that the amsmath package sets \interdisplaylinepenalty to 10000
-% thus preventing page breaks from occurring within multiline equations. Use:
-%\interdisplaylinepenalty=2500
-% after loading amsmath to restore such page breaks as IEEEtran.cls normally
-% does. amsmath.sty is already installed on most LaTeX systems. The latest
-% version and documentation can be obtained at:
-% http://www.ctan.org/tex-archive/macros/latex/required/amslatex/math/
-
-
-%\usepackage{eqparbox}
-% Also of notable interest is Scott Pakin's eqparbox package for creating
-% (automatically sized) equal width boxes - aka "natural width parboxes".
-% Available at:
-% http://www.ctan.org/tex-archive/macros/latex/contrib/eqparbox/
-
-
 \hyphenation{op-tical net-works semi-conduc-tor}
 
 \begin{document}
+\lstset{language=Java, basicstyle=\small}
+
+
 
 \title{Concurrent Patricia Trie \\ \normalsize https://github.com/kl4ng/concurrent-patricia-trie}
 
@@ -101,10 +78,42 @@ The main advantage to come the edge-based technique is that it allows for insert
 
 Go into detail about what changes (if any) we make from the original pseudocode due to the nature of the Rust language (for better or for worse). Go into detail about what we do new (hopefully able to implement it with more than two children, or have less Flag objects).
 
+
 \subsection{Data Structures}
-The data structure used to store the Patricia Tree is simply a tree that stores a grand root node and a logical root node as well as all the functions to search and modify inside the tree. The two root structure is used for creating searching by forcing enough nodes to make a proper seek record.
+The data structure used to store the Patricia Tree is simply a tree that stores a grand root node and a logical root node as well as all the functions to search and modify inside the tree. The two root structure is used for creating searching by forcing enough nodes to make a proper seek record. There is also a small data structure called SeekRecord used for storing a seekRecord during a seek operation.
 \par
-The individual node structure is also relatively simple. It contains a key to store for comparison purposes, which is technically uneeded due to the nature of a trie, but very helpful. It contains a value and a mask, and perhaps the most important part is that instead of classic pointers to the children, it makes use of an AtomicStampedReference that allows for CAS operations on the edge between the two nodes and allows for both a node pointer and an integer to be stored. By allowing the integer to be stored inside the edge, it enables the edge to be flagged on the edge and is a large part of how our algorithm works.
+The individual node structure is also relatively simple. It contains a key to store for comparison purposes, which is technically uneeded due to the nature of a trie, but very helpful, as well as a mask which is used for. It contains a value and a mask, and perhaps the most important part is that instead of classic pointers to the children, it makes use of an AtomicStampedReference that allows for CAS operations on the edge between the two nodes and allows for both a node pointer and an integer to be stored. By allowing the integer to be stored inside the edge, it enables the edge to be flagged on the edge and is a large part of how our algorithm works.
+
+
+\subsection{Algorithm}
+The Patricia Trie initially contains a Grand root node linking to a dummy node and a logical root node. The logical root node will link to two dummy nodes representing. One of these represents all 0s, where the key is equal to 0, and the other represents all 1s, where the key is equal to the max value of an integer. With this the tree is created and we will now show you how the various operations will work on our algorithm.
+
+\subsubsection{Get and Contains Operations}
+These two operations are slightly different but accomplished in the same way. The operations work by starting at the logical root and going down the tree in much the same way that a normal trie would do it. The only unique feature here is that instead of using pointers, they are using the getReference function of the AtomicStampedReference.
+\begin{lstlisting}
+pubic boolean contains(int key)
+{
+   return get(key) != null;
+}
+
+public T get(int key)
+{
+   Node node = rootNode;
+
+   while(!isLeaf(node) && isPrefix(node, key))
+   {
+      if(node.key > key)
+         node = node.left.getReference();
+      else
+         node = node.right.getReference();
+   }
+
+   if(isLeaf(node && key = node.key)
+      return node.value;
+   else
+      return null;
+}
+\end{lstlisting}
 
 \section{Experimental Evaluation}
 In this section, we will describe the results of evaluating our edge-based-flagging patricia trie with other similar concurrent data structures.
@@ -223,9 +232,6 @@ The other data structures we will be using will be a lock-free binary search tre
 
 \section{Conclusion}
 The conclusion goes here, once we finish the above sections.
-
-
-\subsection{Algorithm Basics}
 
 
 \section{Conclusion}
