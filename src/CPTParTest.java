@@ -69,7 +69,7 @@ public class CPTParTest implements Runnable
             insPercent = 9;
             delPercent = 1;
             iterations = 5000000 / NUM_THREADS;   // how many iterations each thread does
-            keyRange = 1000000;
+            keyRange = 100000;
             initSize = 0;
             timeSpent = new long[NUM_THREADS];
             cpt = new ConcurrentPatriciaTrie<Integer>();
@@ -104,11 +104,16 @@ public class CPTParTest implements Runnable
             double avgTime = (totalTimeSpent / 1000.0d) / (NUM_THREADS);
             ops = (NUM_THREADS * iterations) / avgTime;
             
-            System.out.printf("get/ins/del: %d / %d / %d\n", getPercent, insPercent, delPercent);
-            System.out.printf("Key range: %d\n", keyRange);
-            System.out.printf("Num threads: %d\n", NUM_THREADS);
-            System.out.printf("Throughput (op/sec): %f\n", ops);
-            System.out.println();
+//            System.out.printf("get/ins/del: %d / %d / %d\n", getPercent, insPercent, delPercent);
+//            System.out.printf("Key range: %d\n", keyRange);
+//            System.out.printf("Num threads: %d\n", NUM_THREADS);
+//            System.out.printf("Throughput (op/sec): %f\n", ops);
+            
+            if(NUM_THREADS == 1)
+                System.out.printf("\\addplot coordinates {\n    ");
+            System.out.printf("(%d, %f) ", NUM_THREADS, ops);
+            if(NUM_THREADS == 16)
+                System.out.printf("\n};\\label{plots:cpt-ef}");
         }
     }
 
