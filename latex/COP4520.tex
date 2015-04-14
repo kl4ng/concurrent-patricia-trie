@@ -119,6 +119,9 @@ public T get(int key)
 In this section, we will describe the results of evaluating our edge-based-flagging patricia trie with other similar concurrent data structures.
 
 The other data structures we will be using will be a lock-free binary search tree based on\cite{Natarajan2014} which is also implemented in Java\cite{LFBST}. The second and final data structure we will be testing our results with is a lock-free patricia trie with node-based flagging as described in\cite{Shafiei2013}. For the implementation, we reached out to the author who provided us with his Java source code of his non-replace implementation.
+
+
+
 \clearpage
 \begin{tikzpicture}
   \begin{groupplot}[group style={group size= 3 by 4, vertical sep=1.5cm, horizontal sep=1.8cm},height=5.5cm,width=5.5cm]
@@ -130,10 +133,10 @@ The other data structures we will be using will be a lock-free binary search tre
                   (1, 3816793.893130) (2, 3463803.255975) (4, 6205398.696866) (8, 6498781.478473) (16, 6470921.297420)
               };\label{plots:cpt-ef}
               \addplot coordinates {
-                  (0, 10) (2, 5)
+                  (1, 4152823.920266) (2, 3414134.516900) (4, 6426735.218509) (8, 7131395.970761) (16, 7542900.245144) 
               };\label{plots:cpt-nf}
               \addplot coordinates {
-                  (0, 10) (2, 5)
+                  (1, 3831417.624521) (2, 3709198.813056) (4, 6261740.763932) (8, 6630200.563567) (16, 7156915.369476) 
               };\label{plots:bst-ef}
               \coordinate (top) at (rel axis cs:0,1);% coordinate at top of the first plot
       
@@ -142,12 +145,24 @@ The other data structures we will be using will be a lock-free binary search tre
               \addplot coordinates {
                   (1, 4892367.906067) (2, 6146281.499693) (4, 11876484.560570) (8, 14378145.219267) (16, 15683199.372672) 
               };\label{plots:cpt-ef}
+              \addplot coordinates {
+                  (1, 5882352.941176) (2, 7097232.079489) (4, 12539184.952978) (8, 14880952.380952) (16, 20844189.682126) 
+              };\label{plots:cpt-nf}
+              \addplot coordinates {
+                  (1, 4844961.240310) (2, 5094243.504840) (4, 11396011.396011) (8, 12206286.237412) (16, 15137180.700095) 
+              };\label{plots:bst-ef}
       
       % 90/9/1 1K
       \nextgroupplot[title=Read Dominated,xlabel={(c)}]
               \addplot coordinates {
                   (1, 5102040.816327) (2, 8431703.204047) (4, 11607661.056297) (8, 23310023.310023) (16, 24024024.024024) 
               };\label{plots:cpt-ef}
+              \addplot coordinates {
+                  (1, 6887052.341598) (2, 10131712.259372) (4, 13333333.333333) (8, 20470829.068577) (16, 30852294.639414) 
+              };\label{plots:cpt-nf}
+              \addplot coordinates {
+                  (1, 4906771.344455) (2, 8424599.831508) (4, 11422044.545974) (8, 22075055.187638) (16, 21430484.864720) 
+              };\label{plots:bst-ef}
       
       %%
       % 0/50/50 10K
@@ -155,18 +170,36 @@ The other data structures we will be using will be a lock-free binary search tre
               \addplot coordinates {
                   (1, 2341920.374707) (2, 2604166.666667) (4, 4599816.007360) (8, 5210368.633581) (16, 5307503.483049)
               };\label{plots:cpt-ef}
-      
+              \addplot coordinates {
+                  (1, 3024803.387780) (2, 3000300.030003) (4, 5670541.536717) (8, 6337135.614702) (16, 6469874.646179) 
+              };\label{plots:cpt-nf}
+              \addplot coordinates {
+                  (1, 2284148.012791) (2, 2503128.911139) (4, 5099439.061703) (8, 4764173.415912) (16, 5461123.626186) 
+              };\label{plots:bst-ef}
+              
       % 70/20/10 10K
       \nextgroupplot[xlabel={(e)}]
               \addplot coordinates {
                   (1, 2842524.161455) (2, 4006410.256410) (4, 7870916.961826) (8, 9136592.051165) (16, 9939122.872407) 
               };\label{plots:cpt-ef}
+              \addplot coordinates {
+                  (1, 3503854.239664) (2, 5078720.162519) (4, 9178522.257916) (8, 11179429.849078) (16, 11759517.859768) 
+              };\label{plots:cpt-nf}
+              \addplot coordinates {
+                  (1, 2699784.017279) (2, 3449465.332873) (4, 6106870.229008) (8, 7939658.594680) (16, 8586454.867447) 
+              };\label{plots:bst-ef}
       
       % 90/9/1 10K
       \nextgroupplot[xlabel={(f)}]
               \addplot coordinates {
                   (1, 2873563.218391) (2, 5089058.524173) (4, 9429514.380009) (8, 12618296.529968) (16, 10489052.051921) 
-              };\label{plots:cpt-ef}     
+              };\label{plots:cpt-ef}
+              \addplot coordinates {
+                  (1, 4306632.213609) (2, 5396654.074474) (4, 10111223.458038) (8, 9666505.558241) (16, 15558148.580319) 
+              };\label{plots:cpt-nf}
+              \addplot coordinates {
+                  (1, 2426006.792819) (2, 4897159.647405) (4, 9483167.377904) (8, 10162601.626016) (16, 11159157.483610) 
+              };\label{plots:bst-ef}
       
       %%
       % 0/50/50 100K
@@ -174,18 +207,36 @@ The other data structures we will be using will be a lock-free binary search tre
               \addplot coordinates {
                                 (1, 900252.070580) (2, 1347708.894879) (4, 1876700.760064) (8, 1910037.245726) (16, 2036037.870304)  
               };\label{plots:cpt-ef}
+              \addplot coordinates {
+                  (1, 1325556.733828) (2, 1723246.596588) (4, 2131514.441010) (8, 2111820.917586) (16, 2366023.896841) 
+              };\label{plots:cpt-nf}
+              \addplot coordinates {
+                  (1, 808538.163001) (2, 1012658.227848) (4, 1736412.571627) (8, 1785554.861173) (16, 1956516.422510) 
+              };\label{plots:bst-ef}
       
       % 70/20/10 100K
       \nextgroupplot[xlabel={(h)}]
               \addplot coordinates {
                   (1, 1087902.523934) (2, 1664447.403462) (4, 2367704.510477) (8, 2572678.157962) (16, 2429469.464606) 
               };\label{plots:cpt-ef}
-      
+              \addplot coordinates {
+                  (1, 1606167.683906) (2, 2326663.564449) (4, 2770466.823660) (8, 2282323.405227) (16, 3378663.738491) 
+              };\label{plots:cpt-nf}
+              \addplot coordinates {
+                  (1, 972762.645914) (2, 1508523.155830) (4, 2483854.942871) (8, 2432350.258437) (16, 2793296.089385) 
+              };\label{plots:bst-ef}
+              
       % 90/9/1 100K
       \nextgroupplot[xlabel={(i)}]
               \addplot coordinates {
                   (1, 1287001.287001) (2, 1855976.243504) (4, 2956393.200296) (8, 2690884.628322) (16, 3132096.155352) 
               };\label{plots:cpt-ef}
+              \addplot coordinates {
+                  (1, 1996007.984032) (2, 2789400.278940) (4, 3074085.459576) (8, 3856165.043864) (16, 3960396.039604) 
+              };\label{plots:cpt-nf}
+              \addplot coordinates {
+                  (1, 1164958.061510) (2, 1930501.930502) (4, 3367570.298030) (8, 3462903.644706) (16, 3100414.680464) 
+              };\label{plots:bst-ef}
       
       %%
       % 0/50/50 1M
@@ -193,20 +244,39 @@ The other data structures we will be using will be a lock-free binary search tre
               \addplot coordinates {
                                 (1, 504948.495253) (2, 1025325.540859) (4, 1008013.708986) (8, 1008954.470929) (16, 1158731.768080) 
               };\label{plots:cpt-ef}
+              \addplot coordinates {
+                  (1, 865650.969529) (2, 1204529.029150) (4, 1327051.954084) (8, 1340482.573727) (16, 1364815.067558) 
+              };\label{plots:cpt-nf}
+              \addplot coordinates {
+                  (1, 554692.700244) (2, 872752.661896) (4, 1117068.811439) (8, 1169180.404536) (16, 1184641.127778) 
+              };\label{plots:bst-ef}
 
       % 70/20/10 1M
       \nextgroupplot[xlabel={(k)}]
               \addplot coordinates {
                   (1, 671140.939597) (2, 1084951.719648) (4, 1695489.996609) (8, 1790911.126035) (16, 1893132.661271) 
               };\label{plots:cpt-ef}
+              \addplot coordinates {
+                  (1, 1126126.126126) (2, 1603849.238172) (4, 1849796.522383) (8, 2207505.518764) (16, 1824942.400255) 
+              };\label{plots:cpt-nf}
+              \addplot coordinates {
+                  (1, 693673.695893) (2, 1209189.842805) (4, 1625355.546526) (8, 1681308.057669) (16, 1575454.420134) 
+              };\label{plots:bst-ef}
       
       % 90/9/1 1M
       \nextgroupplot[xlabel={(l)}]
               \addplot coordinates {
                   (1, 900414.190528) (2, 1273398.701133) (4, 2072753.653228) (8, 2050545.957861) (16, 2341577.637934) 
               };\label{plots:cpt-ef}
+              \addplot coordinates {
+                  (1, 1541307.028360) (2, 2157497.303128) (4, 2474022.761009) (8, 2318840.579710) (16, 2607476.940126) 
+              };\label{plots:cpt-nf}
+              \addplot coordinates {
+                  (1, 873057.447180) (2, 1476450.612727) (4, 2040191.778027) (8, 1948842.874543) (16, 2353079.592917) 
+              };\label{plots:bst-ef}
               \coordinate (bot) at (rel axis cs:0,0);% coordinate at bottom of the last plot
   \end{groupplot}
+  
   \path (top-|current bounding box.west)-- 
         node[anchor=south,rotate=90] {Throughput(opns/sec)} 
         (bot-|current bounding box.west);
@@ -228,10 +298,6 @@ The other data structures we will be using will be a lock-free binary search tre
       \ref{plots:bst-ef}& BST-EDGE-FLAG\\};
 \end{tikzpicture}
 \clearpage
-
-
-\section{Conclusion}
-The conclusion goes here, once we finish the above sections.
 
 
 \section{Conclusion}
