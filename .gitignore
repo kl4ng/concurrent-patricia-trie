@@ -12,3 +12,4 @@ COP4520.synctex.gz
 *.bst~
 *.cls~
 /bin
+/src/.metadata
