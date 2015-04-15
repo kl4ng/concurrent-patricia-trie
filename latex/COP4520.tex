@@ -231,17 +231,21 @@ We conducted our experiments on a basic desktop computer with a 3.0GHz Q6600 Int
 \end{enumerate}
 
 \subsection{Results}
-As mentioned before, each simulation was run for around five seconds. The results are shown in Figure X.
-It is clear that the node-flagging implementation of the patricia trie (CPT-NODE-FLAG) has the best throughput for nearly every configuration, still performing better than our new edge-flagging implementation of the patricia trie (CPT-EDGE-FLAG). Another interesting data point is the fact that CPT-NODE-FLAG also outperformed the lock free binary search tree (BST-EDGE-FLAG) that uses the same edge-based flagging method as our implementation (CPT-EDGE-FLAG). However, our implementation has a small, but noticeable, throughput advantage over the BST-EDGE-FLAG implementation under certain configurations. 
+As mentioned before, each simulation was run for around five seconds. The results are shown in Figure 1.
+It is clear that the node-flagging implementation of the patricia trie (CPT-NODE-FLAG) has the best throughput for nearly every configuration, still performing better than our new edge-flagging implementation of the patricia trie (CPT-EDGE-FLAG). Another interesting data point is the fact that CPT-NODE-FLAG also outperformed the lock free binary search tree (BST-EDGE-FLAG) that uses the same edge-based flagging method as our implementation (CPT-EDGE-FLAG). Another important observation is the fact that our implementation has about equal throughput in comparison to the BST-EDGE-FLAG implementation, when averaged across all the configurations. 
 \par
-As the key range varies with the workload kept constant, there is no clear change in throughput for any of the algorithms, relatively speaking. However, a larger key range actually led to worse throughput, regardless of the workload type or number of threads.
+As the key range varies with the workload kept constant, there is no clear change in throughput for any of the algorithms, relatively speaking. However, a larger key range actually led to worse throughput, regardless of the workload type or number of threads. This can be seen in the graphs: in the write dominated configuration, e.g., there is a digression from around $7*10^6$ operations per second when at 8 threads at a 1K key range down to $1.4*10^6$ operations per second with the same amount of threads at a 1M key range.
 \par
-The difference between the differing workloads was also not very pronounced, in terms of relative performance. In terms of absolute performance of all the data structures, we saw that as we reduced the amount of write-oriented instructions, we saw an expected increase in throughput.
+The difference between the differing workloads was also not very pronounced, in terms of relative performance. In terms of absolute performance of all the data structures, we saw that as we reduced the amount of write-oriented instructions, we saw an expected increase in throughput. One can look across any given row in Figure 1 in order to see that this is the case. For example, as we reduce the proportion of write instructions in the 1K key range, we see an improvement of max throughput from $7.5*10^6$ to $3*10^7$ operations per second, a fairly significant improvement. 
 
 
 \subsection{Discussion}
-Talk about why our algorithm was still not better than node-flagging.
-
+The first thing that comes apparent when looking at the results is the similarity of throughput between BST-EDGE-FLAG and CPT-EDGE-FLAG (our implementation). This shows that the added checks performed at every branch during any seek within the patricia trie that are utilized to exit the search early have too much overhead to lead to significant throughput improvements over BST-EDGE-FLAG. Indeed, it shows that the added performance of being able to exit searching early equals the loss of performance that all those extra checks add.
+\par
+Additionally, its clear that CPT-NODE-FLAG, the node-based flagging method for the patricia trie, is the clear throughput winner in almost all configurations. This becomes more surprising when one looks at the results from other tests, such as in Natarajan and Mittal's\cite{Natarajan2014}, which found a clear improvement over node-based-flagging BST techniques. We speculate that this unexpected result is due to the nature of the Java runtime environment, where the excess amount of helper objects created by CPT-NODE-FLAG may not result in any loss of throughput due to the garbage collector never being called during the short time of our tests, for example. This may explain the discrepancy between our Java-based results and Natarajan and Mittal's C-based results. 
+\par
+Another possible explanation for these results is the possibility that the advantages of using edge-based flagging for a patricia trie are only more readily apparent in heavily parallel environment with 32 or more logical cores. Natarajan and Mittal's testing results\cite{Natarajan2014} seem to confirm this, as any significant improvements in throughput only become apparent with 16 or more threads within their 64 logical cores testing environment. 
+\par
 
 \clearpage
 \begin{tikzpicture}
@@ -418,14 +422,14 @@ Talk about why our algorithm was still not better than node-flagging.
       \ref{plots:cpt-nf}& CPT-NODE-FLAG&[8pt]
       \ref{plots:bst-ef}& BST-EDGE-FLAG\\};
 \end{tikzpicture}
-Figure X: Each row represents a different key range. Each column, a workload type.
+Figure 1: Each row represents a different key range. Each column, a workload type.
 \clearpage
 
 
 \section{Conclusion and Future Work}
 In this paper, we present a new lock-free algorithm for concurrent manipulation of a binary patricia trie that uses compare-and-swap and bit-test-and-set atomic instructions. While our algorithm does not out-perform the node-flagging implementation that we sought to improve upon, it does have its own advantages that may be more evident in a non-garbage-collected environment.
 \par
-Further work to be done consists of implementing this algorithm in a managed memory environment and see the degree to which that affects the throughput relative to the algorithms described in\cite{Shafiei2013}\cite{Natarajan2014}. Other future work includes adding a replace operation to our algorithm and comparing the ease and performance of that with the node-flagging patricia trie\cite{Shafiei2013}.
+Further work to be done consists of implementing this algorithm in a managed memory environment (such as C) and see the degree to which that affects the throughput relative to the algorithms described in\cite{Shafiei2013}\cite{Natarajan2014}. Additionally, the performance difference between ours and other similar algorithms should be tested within a more parallel environment to see how it performs comparatively within a highly parallel testing environment. Other future work includes adding a replace operation to our algorithm and comparing the ease of implementation and performance of that with a node-flagging patricia trie that also implements a replace operation\cite{Shafiei2013}.
 
 
 \section{Acknowledgment}
