@@ -11,7 +11,7 @@
 \hyphenation{op-tical net-works semi-conduc-tor}
 
 \begin{document}
-\lstset{language=Java, basicstyle=\small}
+\lstset{language=Java, basicstyle=\small, breaklines=true}
 
 
 
@@ -98,20 +98,20 @@ pubic boolean contains(int key)
 
 public T get(int key)
 {
-   Node node = rootNode;
+  Node node = rootNode;
 
-   while(!isLeaf(node) && isPrefix(node,key))
-   {
-      if(node.key > key)
-         node = node.left.getReference();
-      else
-         node = node.right.getReference();
+  while(!isLeaf(node) && isPrefix(node,key))
+  {
+    if(node.key > key)
+      node = node.left.getReference();
+    else
+      node = node.right.getReference();
    }
 
-   if(isLeaf(node && key = node.key)
-      return node.value;
-   else
-      return null;
+  if(isLeaf(node && key = node.key)
+    return node.value;
+  else
+    return null;
 }
 \end{lstlisting}
 
@@ -121,62 +121,60 @@ TBD
 \begin{lstlisting}[frame=lines]
 public boolean insert(int key, T value)
 {
-   Node node;
-   Node prevNode;
+  Node node;
+  Node prevNode;
 
-   while(true)
-   {
-      prevNode = root;
-      node = root.left.getReference();
+  while(true)
+  {
+    prevNode = root;
+    node = root.left.getReference();
       
-      while(!isLeaf(node) && isPrefix(node,key))
-      {
-         prevNode = node;
-         if(node.key > key)
-           node = node.left.getReference();
-         else
-           node = node.right.getReference();
-      }
-
-      if(isLeaf(node) && node.key == key)
-        return false;
-
-      int bitwiseXOR = node.key ^ key;
-      int counter = 0;
-      while(bitwiseXOR != 0)
-      {
-        bitwiseXOR >>= 1;
-        counter++;
-      }
-
-      int inKey = key >>> i << i;
-      inKey = inKey | (1 << (i-1));
-      int inMask = all1 >>> i << i;
-
-      Node inter;
-      Node newNode = new Node(key, value)
+    while(!isLeaf(node) && isPrefix(node,key))
+    {
+      prevNode = node;
       if(node.key > key)
-        inter = new Node(inkey,inMask,newNode,node)
+        node = node.left.getReference();
       else
-        inter = new Node(inkey,inMask,node,newNode)
+        node = node.right.getReference();
+    }
 
-      if(prevNode.key > key)
-      {
-        if(pnode.left.compareAndSet(node,internal,
-                             Node.UF_UT,Node.UF_UT)
-           return true;   
-        else if(node == prevNode.left.getReference())
-           cleanUp(key, seek(key));
-      }
-      else
-      {
-        if(pnode.right.compareAndSet(node,internal,
-                             Node.UF_UT,Node.UF_UT)
-           return true;   
-        else if(node == prevNode.right.getReference())
-           cleanUp(key, seek(key));
-      }
-   }
+    if(isLeaf(node) && node.key == key)
+      return false;
+
+    int bitwiseXOR = node.key ^ key;
+    int counter = 0;
+    while(bitwiseXOR != 0)
+    {
+      bitwiseXOR >>= 1;
+      counter++;
+    }
+
+    int inKey = key >>> i << i;
+    inKey = inKey | (1 << (i-1));
+    int inMask = all1 >>> i << i;
+
+    Node inter;
+    Node newNode = new Node(key, value)
+    if(node.key > key)
+      inter = new Node(inkey,inMask,newNode,node)
+    else
+      inter = new Node(inkey,inMask,node,newNode)
+
+    if(prevNode.key > key)
+    {
+      if(pnode.left.compareAndSet(node,internal,Node.UF_UT,Node.UF_UT)
+        return true;   
+      else if(node == prevNode.left.getReference())
+        cleanUp(key, seek(key));
+    }
+    else
+    {
+      if(pnode.right.compareAndSet(node,internal,Node.UF_UT,Node.UF_UT)
+        return true;   
+      else if(node == prevNode.right.getReference())
+        cleanUp(key, seek(key));
+    }
+  }
 }
 \end{lstlisting}
 
@@ -186,32 +184,57 @@ TBD
 \begin{lstlisting}[frame=lines]
 public final void delete(int key)
 {
-   boolean isCleanup = false;
-   SeekRecord<t> sRecord;
-   Node parent;
-   Node leaf = null;
-   while(true)
-   {
-      sRecord = seek(key)
-      if(!isCleanup)
-      {
-         leaf = sRecord.leaf;
-         if(leaf.key != key)
-           return;
-         else
-         {
-           parent = sRecord.parent;
+  boolean isCleanup = false;
+  SeekRecord<t> sRecord;
+  Node parent;
+  Node leaf = null;
 
-         }
-      }
-      else if(s.leaf == leaf)
-      {
-         if(cleanUp(key, s))
-           return
-      }
+  while(true)
+  {
+    sRecord = seek(key)
+    if(!isCleanup)
+    {
+      leaf = sRecord.leaf;
+
+      if(leaf.key != key)
+        return;
       else
-         return;
-   }
+      {
+        parent = sRecord.parent;
+        if(parent.key > key)
+        {
+          if(par.left.compareAndSet(leaf,leaf,Node.UF_UT,Node.F_UT)
+          {
+            isCleanup = true;
+            if(cleanUp(key, sRecord))
+              return;
+          }
+          else if(leaf == parent.left.getReference())
+            cleanUp(key, s);
+        }
+        else
+        {
+          if(par.right.compareAndSet(leaf,leaf,Node.UF_UT,Node.F_UT)
+          {
+            isCleanup = true;
+            if(cleanUp(key, sRecord))
+              return;
+          }
+          else if(leaf == parent.right.getReference())
+            cleanUp(key, s);
+        }
+      }
+    }
+
+    else if(s.leaf == leaf)
+    {
+      if(cleanUp(key, s))
+        return
+    }
+
+    else
+      return;
+  }
 }
 \end{lstlisting}
 
