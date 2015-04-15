@@ -185,6 +185,34 @@ TBD
 
 \begin{lstlisting}[frame=lines]
 public final void delete(int key)
+{
+   boolean isCleanup = false;
+   SeekRecord<t> sRecord;
+   Node parent;
+   Node leaf = null;
+   while(true)
+   {
+      sRecord = seek(key)
+      if(!isCleanup)
+      {
+         leaf = sRecord.leaf;
+         if(leaf.key != key)
+           return;
+         else
+         {
+           parent = sRecord.parent;
+
+         }
+      }
+      else if(s.leaf == leaf)
+      {
+         if(cleanUp(key, s))
+           return
+      }
+      else
+         return;
+   }
+}
 \end{lstlisting}
 
 \section{Experimental Evaluation}
