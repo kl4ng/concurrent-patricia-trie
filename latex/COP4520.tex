@@ -10,6 +10,9 @@
 \pgfplotsset{compat=newest}
 \hyphenation{op-tical net-works semi-conduc-tor}
 
+\usepackage{graphicx}
+\graphicspath{ {images/} }
+
 \begin{document}
 \lstset{language=Java, basicstyle=\small, breaklines=true}
 
@@ -39,6 +42,12 @@ This paper shows an implementation of a non-blocking Patricia Trie that combines
 
 \section{Introduction}
 A Patricia Trie, also known as a Radix tree, is a unique version of a regular tree. The defining feature of any trie, also known as a digital tree, is that the position of a node in a tree defines the key for that node. A Patricia trie takes this and optimizes the tree by merging any parent node with only one child in order to save space and create a more efficient tree.\cite{Shafiei2013} Because a Patricia Trie is a relatively simple data structure and has many practical uses, it is a good data structure to have an efficient parallelization technique for.
+	
+\begin{figure}[h]
+\includegraphics{patriciapreview}
+\caption{An example of a Patricia Trie. The left diagram what is seen while transversing the tree and the right diagram shows what the full key value of each node is.}
+\end{figure}
+
 \par
 Our implementation of a parallelized, lock-free Patricia Tree will aim to maximize performance and space-efficiency while removing some of the overhead of previous implementations by fine-tuning the memory management. We will combining multiple older approaches and taking the benefits of each and combining them. Our implementation will be focused on using compare-and-swap (CAS) operations which will allow for a blocking-free implementation. \cite{Shafiei2013,Brown2014}
 \par
@@ -116,7 +125,11 @@ public T get(int key)
 \end{lstlisting}
 
 \subsubsection{Insert Operation}
-TBD
+The insert operation is different from the previous two operations in that it is remarkably different from the linear version of the operation. This is one of the two operations that we implement that make use of the edge-based technique in order to implement the concurrency. 
+\par
+The algorithm for the operation is relatively simple. First it cycles through the tree storing the current and previous node until it either finds the node it is trying to insert, in which case it returns false, or the correct position for the node to be inserted. Once it has reached this part it then uses the current nodes key to generate the new key and mask for the new nodes. it then creates a new internal node and linkes it to both a new node that your inserting and the node originally in that position. Then at this point, it uses a CAS operation to ensure that the original node is still unchanged, and if it is, it then linkes the previous node to the new internal node which is linked to the new node and the original node. After this, the thread handles the cleanup.
+\par
+Because the CAS operation is done after the internal node is properly linked to everything, the operation is linearizble. From the view of other threads the entire operation takes place during the CAS and because of this, the operation is completely concurrent. And since we use the edge, no unrelated nodes are unavailble during the operation.
 
 \begin{lstlisting}[frame=lines]
 public boolean insert(int key, T value)
@@ -162,14 +175,14 @@ public boolean insert(int key, T value)
 
     if(prevNode.key > key)
     {
-      if(pnode.left.compareAndSet(node,internal,Node.UF_UT,Node.UF_UT)
+      if(prevNode.left.compareAndSet(node,inter,Node.UF_UT,Node.UF_UT)
         return true;   
       else if(node == prevNode.left.getReference())
         cleanUp(key, seek(key));
     }
     else
     {
-      if(pnode.right.compareAndSet(node,internal,Node.UF_UT,Node.UF_UT)
+      if(prevNode.right.compareAndSet(node,inter,Node.UF_UT,Node.UF_UT)
         return true;   
       else if(node == prevNode.right.getReference())
         cleanUp(key, seek(key));
@@ -179,7 +192,9 @@ public boolean insert(int key, T value)
 \end{lstlisting}
 
 \subsubsection{Delete Operation}
-TBD
+Similar to the insert operation, the delete operation also takes advantage of the edge-based approach we are using. Unlike the insert operation, the delete operation has to keep track of multiple nodes to function correctly, and for this it uses both a seek record and the the grand root. 
+\par
+The delete operation functions by first getting the seek record which stores 4 nodes and then it uses a CAS operation to mark the edge from the parent to the node to be deleted and hadles the deletion and cleanup. This is once again linearizble because the entire deletion seems to take place during the CAS operation to other threads and since the cleanup only handles unreferenced nodes it is completely parallizible. 
 
 \begin{lstlisting}[frame=lines]
 public final void delete(int key)
@@ -259,7 +274,7 @@ It is clear that the node-flagging implementation of the patricia trie (CPT-NODE
 \par
 As the key range varies with the workload kept constant, there is no clear change in throughput for any of the algorithms, relatively speaking. However, a larger key range actually led to worse throughput, regardless of the workload type or number of threads. This can be seen in the graphs: in the write dominated configuration, e.g., there is a digression from around $7*10^6$ operations per second when at 8 threads at a 1K key range down to $1.4*10^6$ operations per second with the same amount of threads at a 1M key range.
 \par
-The difference between the differing workloads was also not very pronounced, in terms of relative performance. In terms of absolute performance of all the data structures, we saw that as we reduced the amount of write-oriented instructions, we saw an expected increase in throughput. One can look across any given row in Figure 1 in order to see that this is the case. For example, as we reduce the proportion of write instructions in the 1K key range, we see an improvement of max throughput from $7.5*10^6$ to $3*10^7$ operations per second, a fairly significant improvement. 
+The difference between the differing workloads was also not very pronounced, in terms of relative performance. In terms of absolute performance of all the data structures, we saw that as we reduced the amount of write-oriented instructions, we saw an expected increase in throughput. One can look across any given row in Figure 2 in order to see that this is the case. For example, as we reduce the proportion of write instructions in the 1K key range, we see an improvement of max throughput from $7.5*10^6$ to $3*10^7$ operations per second, a fairly significant improvement. 
 
 
 \subsection{Discussion}
@@ -270,7 +285,7 @@ Additionally, its clear that CPT-NODE-FLAG, the node-based flagging method for t
 Another possible explanation for these results is the possibility that the advantages of using edge-based flagging for a patricia trie are only more readily apparent in heavily parallel environment with 32 or more logical cores. Natarajan and Mittal's testing results\cite{Natarajan2014} seem to confirm this, as any significant improvements in throughput only become apparent with 16 or more threads within their 64 logical cores testing environment. 
 \par
 
-\clearpage
+\begin{figure}
 \begin{tikzpicture}
   \begin{groupplot}[group style={group size= 3 by 4, vertical sep=1.5cm, horizontal sep=1.8cm},height=5.5cm,width=5.5cm]
       
@@ -445,7 +460,8 @@ Another possible explanation for these results is the possibility that the advan
       \ref{plots:cpt-nf}& CPT-NODE-FLAG&[8pt]
       \ref{plots:bst-ef}& BST-EDGE-FLAG\\};
 \end{tikzpicture}
-Figure 1: Each row represents a different key range. Each column, a workload type.
+\caption{Each row represents a different key range. Each column, a workload type.}
+\end{figure}
 \clearpage
 
 
